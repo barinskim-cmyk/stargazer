@@ -677,13 +677,18 @@
       background: var(--th-card-bg); border: 1px solid var(--th-card-border);
       border-radius: 12px;
     }
-    .ach-item.locked { opacity: 0.32; }
+    .ach-item.locked .ach-icon { opacity: 0.30; }
+    .ach-item.locked .ach-name { color: var(--th-text2); }
     .ach-icon { font-size: 20px; min-width: 28px; text-align: center; flex-shrink: 0; }
     .ach-text { flex: 1; }
     .ach-name { font-size: 14px; color: var(--th-text); font-weight: 400; }
     .ach-desc { font-size: 12px; color: var(--th-text2); margin-top: 2px; line-height: 1.4; }
-    .ach-check { font-size: 14px; color: var(--th-text2); flex-shrink: 0; }
-    .ach-item.unlocked .ach-check { color: var(--th-text); }
+    .ach-check { font-size: 13px; color: var(--th-text2); flex-shrink: 0; }
+    .ach-item.unlocked .ach-check {
+      color: var(--th-text);
+      text-shadow: 0 0 5px var(--th-len-glow, currentColor),
+                   0 0 14px var(--th-len-glow, currentColor);
+    }
 
     /* ── home screen ── */
     #home-screen {
