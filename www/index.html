@@ -36,12 +36,12 @@
       --th-font:        'Raleway', sans-serif;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100dvh; background: var(--th-bg); font-family: var(--th-font, 'Raleway', sans-serif); color: var(--th-text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { margin: 0; min-height: 100dvh; background: #1a1a2e; font-family: var(--th-font, 'Raleway', sans-serif); color: var(--th-text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     canvas { cursor: pointer; display: block; touch-action: none; }
 
     /* ── start screen ── */
     #start {
-      position: fixed; inset: 0; background: var(--th-bg); box-sizing: border-box;
+      position: fixed; inset: 0; background: #1a1a2e; box-sizing: border-box;
       display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 28px;
       z-index: 10;
       padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
@@ -372,7 +372,7 @@
     #journey {
       position: fixed; inset: 0; z-index: 11;
       display: none; flex-direction: column;
-      background: var(--th-bg); box-sizing: border-box;
+      background: #0b0b14; box-sizing: border-box;
     }
     #journey-topbar {
       display: flex; align-items: center; gap: 14px; flex-shrink: 0;
@@ -528,7 +528,7 @@
     /* ── auth screen ── */
     #auth-screen {
       position: fixed; inset: 0; z-index: 20;
-      background: var(--th-bg);
+      background: #0b0b14;
       display: flex; flex-direction: column;
       justify-content: center; align-items: center; gap: 16px;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 48px);
@@ -567,7 +567,7 @@
     /* ── home screen ── */
     #home-screen {
       position: fixed; inset: 0; z-index: 15;
-      background: var(--th-bg);
+      background: #0b0b14;
       display: flex; flex-direction: column;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 14px);
       padding-bottom: 0;
@@ -677,7 +677,7 @@
     /* ── sky hub screen ── */
     #sky-hub-screen {
       position: fixed; inset: 0; z-index: 16;
-      background: var(--th-bg);
+      background: #0b0b14;
       display: flex; flex-direction: column;
     }
     #sky-hub-topbar {
@@ -715,7 +715,7 @@
     /* ── stub screens (Мои созвездия / Общее небо / Настройки) ── */
     #stub-screen {
       position: fixed; inset: 0; z-index: 16;
-      background: var(--th-bg);
+      background: #0b0b14;
       display: flex; flex-direction: column;
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
       padding-left:   calc(env(safe-area-inset-left, 0px)   + 28px);
@@ -743,7 +743,7 @@
     /* ── constellation detail screen ── */
     #const-detail-screen {
       position: fixed; inset: 0; z-index: 19;
-      background: var(--th-bg);
+      background: #060612;
       display: flex; flex-direction: column;
     }
     #const-detail-topbar {
@@ -802,7 +802,7 @@
     /* ── settings screen ── */
     #settings-screen {
       position: fixed; inset: 0; z-index: 17;
-      background: var(--th-bg);
+      background: #0b0b14;
       display: flex; flex-direction: column;
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
     }
@@ -900,7 +900,7 @@
     /* ── sky screen ("Общее небо") ── */
     #sky-screen {
       position: fixed; inset: 0; z-index: 16;
-      display: none; background: var(--th-bg); overflow: hidden;
+      display: none; background: #060612; overflow: hidden;
     }
     #sky-canvas {
       position: absolute; inset: 0; display: block; touch-action: none; cursor: grab;
@@ -967,7 +967,7 @@
     /* ── tutorial screen ── */
     #tutorial-screen {
       position: fixed; inset: 0; z-index: 19;
-      background: var(--th-bg);
+      background: #0b0b14;
       display: flex; flex-direction: column;
       justify-content: center; align-items: center; gap: 20px;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 56px);
@@ -2251,22 +2251,6 @@
           g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
           o.start(); o.stop(ctx.currentTime + 0.4);
         }
-        if (type === 'twinkle') {
-          // Мягкий эфирный перелив — три короткие ноты вверх
-          o.disconnect();
-          [660, 880, 1320].forEach((freq, i) => {
-            const o2 = ctx.createOscillator();
-            const g2 = ctx.createGain();
-            o2.type = 'sine';
-            o2.connect(g2); g2.connect(ctx.destination);
-            o2.frequency.value = freq;
-            g2.gain.setValueAtTime(0, ctx.currentTime + i * 0.09);
-            g2.gain.linearRampToValueAtTime(0.07, ctx.currentTime + i * 0.09 + 0.03);
-            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.18);
-            o2.start(ctx.currentTime + i * 0.09);
-            o2.stop(ctx.currentTime + i * 0.09 + 0.2);
-          });
-        }
         if (type === 'victory') {
           o.disconnect();
           [523, 659, 784, 1046].forEach((freq, i) => {
@@ -2279,6 +2263,22 @@
             g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
             o2.start(ctx.currentTime + i * 0.15);
             o2.stop(ctx.currentTime + i * 0.15 + 0.3);
+          });
+        }
+        if (type === 'twinkle') {
+          // Мягкий эфирный перелив — три короткие ноты вверх при сохранении созвездия
+          o.disconnect();
+          [660, 880, 1320].forEach((freq, i) => {
+            const o2 = ctx.createOscillator();
+            const g2 = ctx.createGain();
+            o2.type = 'sine';
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.frequency.value = freq;
+            g2.gain.setValueAtTime(0, ctx.currentTime + i * 0.09);
+            g2.gain.linearRampToValueAtTime(0.07, ctx.currentTime + i * 0.09 + 0.03);
+            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.18);
+            o2.start(ctx.currentTime + i * 0.09);
+            o2.stop(ctx.currentTime + i * 0.09 + 0.2);
           });
         }
       } catch(e) {}
@@ -4814,8 +4814,8 @@
         skyDotOther:   'rgba(200,195,220,0.28)',
         skyDotMine:    'rgba(255,245,210,0.55)',
         skyDotHL:      'rgba(255,248,230,0.9)',
-        skyLineRGB:    '248,247,245',           // RGB-тройка для линий созвездий
-        skyStarRGB:    '255,245,210',           // RGB-тройка для ядер звёзд (LOD3)
+        skyLineRGB:    '248,247,245',
+        skyStarRGB:    '255,245,210',
         skyLabelHL:    'rgba(255,248,235,1)',
         skyLabelMine:  'rgba(245,235,215,1)',
         skyLabelOther: 'rgba(220,215,200,1)',
@@ -4957,13 +4957,11 @@
       document.querySelectorAll('.theme-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.theme === name)
       );
-      // Обновляем фон экрана неба если он открыт
-      if (typeof _skyCV !== 'undefined' && _skyCV) {
-        _skyCV.style.background = t.skyBg || t.background;
-      }
-      // Сбрасываем кэш фоновых звёзд — в тёмной теме нужны звёзды, в светлых нет
-      if (typeof _skyBgCache !== 'undefined') _skyBgCache.clear();
-
+      // Обновляем фон sky-canvas если он уже создан (безопасно через DOM)
+      const _skyCanvasEl = document.getElementById('sky-canvas');
+      if (_skyCanvasEl) _skyCanvasEl.style.background = t.skyBg || t.background;
+      // Сбрасываем кэш фоновых звёзд — безопасно через window
+      if (window._skyBgCacheRef) window._skyBgCacheRef.clear();
       // Если переключились на stargazer во время игры — запускаем мерцание
       if (name === 'stargazer' && !gameOver && points.length > 0) {
         startGameTwinkleLoop();
@@ -5383,10 +5381,9 @@
       const emblem = RANK_EMBLEMS[rank - 1];
       if (!emblem) return;
       const now = performance.now();
-      const _rAccent = THEMES[activeTheme]?.accent || '#C0BDBA';
       ctx.save();
       // Lines
-      ctx.strokeStyle = _rAccent;
+      ctx.strokeStyle = '#C0BDBA';
       ctx.lineWidth = 1.5;
       ctx.globalAlpha = 0.55;
       emblem.edges.forEach(([a, b]) => {
@@ -5399,7 +5396,7 @@
       emblem.pts.forEach((p, i) => {
         const twinkle = 0.5 + 0.5 * Math.sin(now / 750 + i * 1.37);
         ctx.globalAlpha = 0.65 + twinkle * 0.35;
-        ctx.fillStyle = _rAccent;
+        ctx.fillStyle = '#C0BDBA';
         ctx.beginPath();
         ctx.arc(cx + p.x, cy + p.y, 3 + twinkle * 2, 0, Math.PI * 2);
         ctx.fill();
@@ -5435,44 +5432,41 @@
         ctx.clearRect(0, 0, W, H);
         ctx.save();
 
-        // Background — use theme bg
-        const _rt = THEMES[activeTheme] || THEMES.stargazer;
+        // Dark background
         ctx.globalAlpha = alpha;
-        ctx.fillStyle = _rt.background;
+        ctx.fillStyle = '#050510';
         ctx.fillRect(0, 0, W, H);
 
-        // Starfield — only in dark/glow themes
-        if (_rt.skyGlow !== false) {
-          const rk = rankInfo.rank;
-          for (let i = 0; i < 180; i++) {
-            const sx = Math.abs(Math.sin(i * 127.3 + rk * 11)) * W;
-            const sy = Math.abs(Math.cos(i * 73.9  + rk * 7))  * H;
-            const sr = 0.4 + Math.abs(Math.sin(i * 211)) * 1.3;
-            const sb = 0.25 + 0.55 * Math.abs(Math.sin(i * 333 + performance.now() / 3000));
-            ctx.globalAlpha = alpha * sb;
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-            ctx.fill();
-          }
+        // Starfield (deterministic, seeded by rank)
+        const rk = rankInfo.rank;
+        for (let i = 0; i < 180; i++) {
+          const sx = Math.abs(Math.sin(i * 127.3 + rk * 11)) * W;
+          const sy = Math.abs(Math.cos(i * 73.9  + rk * 7))  * H;
+          const sr = 0.4 + Math.abs(Math.sin(i * 211)) * 1.3;
+          const sb = 0.25 + 0.55 * Math.abs(Math.sin(i * 333 + performance.now() / 3000));
+          ctx.globalAlpha = alpha * sb;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+          ctx.fill();
         }
 
         ctx.globalAlpha = alpha;
 
         // Sub-text
-        ctx.fillStyle = _rt.textMid;
+        ctx.fillStyle = 'rgba(248,247,245,0.75)';
         ctx.font = '20px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('Новый ранг разблокирован', W / 2, H / 2 - 72);
 
         // Rank name
-        ctx.fillStyle = _rt.accent;
+        ctx.fillStyle = '#C0BDBA';
         ctx.font = 'bold 42px serif';
         ctx.fillText(rankInfo.name, W / 2, H / 2 - 24);
 
         // Sub-rank numeral (I / II / III)
-        ctx.fillStyle = _rt.textSecondary;
+        ctx.fillStyle = 'rgba(220,218,215,0.7)';
         ctx.font = '24px serif';
         ctx.fillText(['','I','II','III'][rankInfo.subRank], W / 2, H / 2 + 18);
 
@@ -5540,9 +5534,8 @@
       const emblem = RANK_EMBLEMS[rank - 1];
       if (!emblem) return;
       const now = performance.now();
-      const _tAccent = THEMES[activeTheme]?.accent || '#C0BDBA';
       tctx.save();
-      tctx.strokeStyle = _tAccent; tctx.lineWidth = 1.5; tctx.globalAlpha = 0.55;
+      tctx.strokeStyle = '#C0BDBA'; tctx.lineWidth = 1.5; tctx.globalAlpha = 0.55;
       emblem.edges.forEach(([a, b]) => {
         tctx.beginPath();
         tctx.moveTo(cx + emblem.pts[a].x, cy + emblem.pts[a].y);
@@ -5552,7 +5545,7 @@
       emblem.pts.forEach((pt, i) => {
         const twinkle = 0.5 + 0.5 * Math.sin(now / 750 + i * 1.37);
         tctx.globalAlpha = 0.65 + twinkle * 0.35;
-        tctx.fillStyle = _tAccent;
+        tctx.fillStyle = '#C0BDBA';
         tctx.beginPath(); tctx.arc(cx + pt.x, cy + pt.y, 3 + twinkle * 2, 0, Math.PI * 2); tctx.fill();
       });
       tctx.restore();
@@ -5572,13 +5565,11 @@
       ].map(([rx, ry]) => ({ x: rx * JW, y: ry * JH }));
     }
 
-    /** Draw a mini constellation preview — adapts to activeTheme (dark/light). */
+    /** Draw a mini constellation preview — same visual as victory screen (glow lines + stars). */
     function drawMiniConstellation(canvas, data) {
       const S   = canvas.width; // 240
       const ctx = canvas.getContext('2d');
-      const sk  = THEMES[activeTheme] || THEMES.stargazer;
-
-      ctx.fillStyle = sk.skyBg || sk.background;
+      ctx.fillStyle = '#060612';
       ctx.fillRect(0, 0, S, S);
 
       const pts = data.points || [];
@@ -5610,61 +5601,39 @@
       const tx = p => (p.x - minX) * scl + ofX;
       const ty = p => (p.y - minY) * scl + ofY;
 
-      // Faint background stars — only in glow themes (dark backgrounds)
-      if (sk.skyBgStar !== false) {
-        for (let i = 0; i < 28; i++) {
-          const sx = Math.abs(Math.sin(i * 127.3 + 3)) * S;
-          const sy = Math.abs(Math.cos(i * 73.9  + 5)) * S;
-          ctx.globalAlpha = 0.04 + Math.abs(Math.sin(i * 211)) * 0.07;
-          ctx.beginPath(); ctx.arc(sx, sy, 0.6, 0, Math.PI * 2);
-          ctx.fillStyle = '#fff'; ctx.fill();
-        }
-        ctx.globalAlpha = 1;
+      // Faint background stars
+      for (let i = 0; i < 28; i++) {
+        const sx = Math.abs(Math.sin(i * 127.3 + 3)) * S;
+        const sy = Math.abs(Math.cos(i * 73.9  + 5)) * S;
+        ctx.globalAlpha = 0.04 + Math.abs(Math.sin(i * 211)) * 0.07;
+        ctx.beginPath(); ctx.arc(sx, sy, 0.6, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff'; ctx.fill();
       }
+      ctx.globalAlpha = 1;
 
-      const lr = sk.skyLineRGB || '248,247,245';
-      if (sk.skyGlow !== false) {
-        // Glowing lines — three-pass
-        lns.forEach(([key, pl]) => {
-          if (pl !== wp) return;
-          const [a, b] = key.split('-').map(Number);
-          if (!pts[a] || !pts[b]) return;
-          const ax = tx(pts[a]), ay = ty(pts[a]);
-          const bx = tx(pts[b]), by = ty(pts[b]);
-          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-          ctx.strokeStyle = `rgba(${lr},0.07)`; ctx.lineWidth = 9; ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-          ctx.strokeStyle = `rgba(${lr},0.18)`; ctx.lineWidth = 3.5; ctx.stroke();
-          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-          ctx.strokeStyle = `rgba(${lr},0.88)`; ctx.lineWidth = 1.2; ctx.stroke();
-        });
-        // Stars with glow
-        const _prevR = RADIUS;
-        RADIUS = Math.round(S * 0.013);
-        pts.forEach((p, i) => {
-          if (deg[i] === 0) return;
-          drawStarPointTo(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false, 0.5);
-        });
-        ctx.filter = 'none';
-        RADIUS = _prevR;
-      } else {
-        // Simple lines + dots for light themes
-        lns.forEach(([key, pl]) => {
-          if (pl !== wp) return;
-          const [a, b] = key.split('-').map(Number);
-          if (!pts[a] || !pts[b]) return;
-          const ax = tx(pts[a]), ay = ty(pts[a]);
-          const bx = tx(pts[b]), by = ty(pts[b]);
-          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-          ctx.strokeStyle = `rgba(${lr},0.70)`; ctx.lineWidth = 1.5; ctx.stroke();
-        });
-        const sr = sk.skyStarRGB || lr;
-        pts.forEach((p, i) => {
-          if (deg[i] === 0) return;
-          ctx.beginPath(); ctx.arc(tx(p), ty(p), 2.2, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${sr},0.85)`; ctx.fill();
-        });
-      }
+      // Glowing lines — same three-pass as victory stargazer theme
+      lns.forEach(([key, pl]) => {
+        if (pl !== wp) return;
+        const [a, b] = key.split('-').map(Number);
+        if (!pts[a] || !pts[b]) return;
+        const ax = tx(pts[a]), ay = ty(pts[a]);
+        const bx = tx(pts[b]), by = ty(pts[b]);
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+        ctx.strokeStyle = 'rgba(248,247,245,0.07)'; ctx.lineWidth = 9; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+        ctx.strokeStyle = 'rgba(248,247,245,0.18)'; ctx.lineWidth = 3.5; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
+        ctx.strokeStyle = 'rgba(248,247,245,0.88)'; ctx.lineWidth = 1.2; ctx.stroke();
+      });
+
+      // Stars with glow — same as victory screen
+      const _prevR = RADIUS;
+      RADIUS = Math.round(S * 0.013); // ~3 for 240px
+      pts.forEach((p, i) => {
+        if (deg[i] === 0) return;
+        drawStarPointTo(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false, 0.5);
+      });
+      RADIUS = _prevR;
     }
 
     // ── Helpers: load/persist saved constellations ────────────────────────────
@@ -5682,7 +5651,7 @@
       const h    = k => _skyHash(name + k);
       const adj  = ADJ [Math.floor(h('_na') * ADJ.length)];
       const noun = NOUN[Math.floor(h('_nn') * NOUN.length)];
-      const margin = 50_000;
+      const margin = 200;
       const wx   = margin + h('_x') * (_SKY_WORLD - 2 * margin);
       const wy   = margin + h('_y') * (_SKY_WORLD - 2 * margin);
       const coord = (wx * 33.33 + 10000).toFixed(0) + '.' + (wy * 33.33).toFixed(2).replace('.','');
@@ -5764,25 +5733,20 @@
       const achMap   = new Map((p.achievementsUnlocked || []).map(a => [a.id, a]));
       const unlocked = new Set(achMap.keys());
 
-      // ── Theme ───────────────────────────────────────────────────────
-      const _jt = THEMES[activeTheme] || THEMES.stargazer;
-
       // ── Background ──────────────────────────────────────────────────
       jctx.clearRect(0, 0, JW, JH);
-      jctx.fillStyle = _jt.background;
+      jctx.fillStyle = '#0A0A1A';
       jctx.fillRect(0, 0, JW, JH);
 
-      // Deterministic twinkling background stars — dark/glow themes only
-      if (_jt.skyGlow !== false) {
-        for (let i = 0; i < 220; i++) {
-          const sx = Math.abs(Math.sin(i * 127.3 + 3)) * JW;
-          const sy = Math.abs(Math.cos(i * 73.9  + 5)) * JH;
-          const sr = 0.4 + Math.abs(Math.sin(i * 211)) * 1.2;
-          const sb = 0.10 + 0.18 * Math.abs(Math.sin(now / 3000 + i * 0.53));
-          jctx.globalAlpha = sb;
-          jctx.fillStyle = '#ffffff';
-          jctx.beginPath(); jctx.arc(sx, sy, sr, 0, Math.PI * 2); jctx.fill();
-        }
+      // Deterministic twinkling background stars
+      for (let i = 0; i < 220; i++) {
+        const sx = Math.abs(Math.sin(i * 127.3 + 3)) * JW;
+        const sy = Math.abs(Math.cos(i * 73.9  + 5)) * JH;
+        const sr = 0.4 + Math.abs(Math.sin(i * 211)) * 1.2;
+        const sb = 0.10 + 0.18 * Math.abs(Math.sin(now / 3000 + i * 0.53));
+        jctx.globalAlpha = sb;
+        jctx.fillStyle = '#ffffff';
+        jctx.beginPath(); jctx.arc(sx, sy, sr, 0, Math.PI * 2); jctx.fill();
       }
       jctx.globalAlpha = 1;
 
@@ -5791,18 +5755,18 @@
       const topY  = 44;
 
       // Player name
-      jctx.fillStyle = _jt.textHi;
+      jctx.fillStyle = 'rgba(248,247,245,0.90)';
       jctx.font = 'bold 28px system-ui, sans-serif';
       jctx.textAlign = 'center'; jctx.textBaseline = 'top';
       jctx.fillText(localStorage.getItem('playerName') || 'Путешественник', topCX, topY);
 
       // Rank title
-      jctx.fillStyle = _jt.accent;
+      jctx.fillStyle = '#C0BDBA';
       jctx.font = '18px system-ui, sans-serif';
       jctx.fillText(info.title, topCX, topY + 36);
 
       // Rating
-      jctx.fillStyle = _jt.textLo;
+      jctx.fillStyle = 'rgba(248,247,245,0.45)';
       jctx.font = '13px system-ui, sans-serif';
       jctx.fillText(`${p.rating} \u2726`, topCX, topY + 62);
 
@@ -5812,16 +5776,16 @@
       const barX = topCX - barW / 2;
       const barY = topY + 84;
       jctx.globalAlpha = 1;
-      jctx.fillStyle = _jt.textLo.replace(/[\d.]+\)$/, '0.10)');
+      jctx.fillStyle = 'rgba(248,247,245,0.10)';
       jctx.fillRect(barX, barY, barW, barH);
       if (info.progress > 0) {
         const g = jctx.createLinearGradient(barX, 0, barX + barW, 0);
-        g.addColorStop(0, _jt.accent); g.addColorStop(1, _jt.accent);
+        g.addColorStop(0, '#C0BDBA'); g.addColorStop(1, '#F0D080');
         jctx.fillStyle = g;
         jctx.fillRect(barX, barY, barW * info.progress, barH);
       }
       if (info.nextThreshold !== null) {
-        jctx.fillStyle = _jt.textLo;
+        jctx.fillStyle = 'rgba(248,247,245,0.30)';
         jctx.font = '11px system-ui, sans-serif';
         jctx.fillText(`до следующего ранга: ${info.nextThreshold - p.rating} \u2726`, topCX, barY + barH + 7);
       }
@@ -5859,16 +5823,16 @@
         const cy  = gridY + row * cellH;
         jctx.globalAlpha = 1;
         // Cell bg
-        jctx.fillStyle = _jt.textLo.replace(/[\d.]+\)$/, '0.04)');
-        jctx.strokeStyle = _jt.textLo.replace(/[\d.]+\)$/, '0.08)'); jctx.lineWidth = 1;
+        jctx.fillStyle = 'rgba(248,247,245,0.04)';
+        jctx.strokeStyle = 'rgba(248,247,245,0.08)'; jctx.lineWidth = 1;
         jctx.beginPath(); jctx.rect(cx - cellW / 2 + 3, cy, cellW - 6, cellH - 5); jctx.fill(); jctx.stroke();
         // Value
-        jctx.fillStyle = _jt.textHi;
+        jctx.fillStyle = 'rgba(248,247,245,0.88)';
         jctx.font = `bold ${typeof val === 'number' ? '20' : '14'}px system-ui, sans-serif`;
         jctx.textAlign = 'center'; jctx.textBaseline = 'middle';
         jctx.fillText(String(val), cx, cy + cellH * 0.38);
         // Label
-        jctx.fillStyle = _jt.textLo;
+        jctx.fillStyle = 'rgba(248,247,245,0.38)';
         jctx.font = '11px system-ui, sans-serif';
         jctx.fillText(label, cx, cy + cellH * 0.72);
       });
@@ -5879,7 +5843,7 @@
 
       // Category dashed lines
       jctx.save();
-      jctx.strokeStyle = _jt.textLo.replace(/[\d.]+\)$/, '0.22)'); jctx.lineWidth = 1;
+      jctx.strokeStyle = 'rgba(220,218,215,0.22)'; jctx.lineWidth = 1;
       jctx.setLineDash([4, 7]);
       ACH_CAT_EDGES.forEach(([ai, bi]) => {
         jctx.beginPath(); jctx.moveTo(starPos[ai].x, starPos[ai].y);
@@ -5899,7 +5863,7 @@
           const pulseA = ((3000 - sinceOpen) / 3000) * 0.35 * Math.abs(Math.sin(sinceOpen / 180));
           if (pulseA > 0.01) {
             jctx.globalAlpha = pulseA;
-            jctx.fillStyle = _jt.accent;
+            jctx.fillStyle = '#C0BDBA';
             jctx.beginPath(); jctx.arc(pos.x, pos.y, 30, 0, Math.PI * 2); jctx.fill();
           }
         }
@@ -5907,18 +5871,18 @@
         // Soft glow behind unlocked star
         if (isUnlocked) {
           jctx.globalAlpha = 0.16 + twinkle * 0.16;
-          jctx.fillStyle = _jt.accent;
+          jctx.fillStyle = '#C0BDBA';
           jctx.beginPath(); jctx.arc(pos.x, pos.y, 22, 0, Math.PI * 2); jctx.fill();
         }
 
         // Star dot
         jctx.globalAlpha = isUnlocked ? 0.80 + twinkle * 0.20 : 0.25;
-        jctx.fillStyle = isUnlocked ? _jt.accent : _jt.textSecondary;
+        jctx.fillStyle = isUnlocked ? '#C0BDBA' : 'rgba(180,180,220,0.8)';
         jctx.beginPath(); jctx.arc(pos.x, pos.y, starR, 0, Math.PI * 2); jctx.fill();
         jctx.globalAlpha = 1;
 
         // Label below star (split on \n)
-        jctx.fillStyle = isUnlocked ? _jt.textMid : _jt.textLo;
+        jctx.fillStyle = isUnlocked ? 'rgba(248,247,245,0.65)' : 'rgba(248,247,245,0.28)';
         jctx.font = '11px system-ui, sans-serif';
         jctx.textAlign = 'center'; jctx.textBaseline = 'top';
         ach.label.split('\n').forEach((ln, li) => {
@@ -5948,16 +5912,16 @@
         ty = Math.max(8, ty);
 
         jctx.save();
-        jctx.fillStyle = _jt.panelBg || _jt.background;
-        jctx.strokeStyle = _jt.textMid; jctx.lineWidth = 1;
+        jctx.fillStyle = 'rgba(10,10,26,0.94)';
+        jctx.strokeStyle = 'rgba(220,218,215,0.50)'; jctx.lineWidth = 1;
         jctx.beginPath(); jctx.rect(tx, ty, boxW, boxH); jctx.fill(); jctx.stroke();
 
         jctx.textAlign = 'center'; jctx.textBaseline = 'top';
-        jctx.fillStyle = isUnlocked ? _jt.accent : _jt.textHi;
+        jctx.fillStyle = isUnlocked ? '#C0BDBA' : 'rgba(248,247,245,0.80)';
         jctx.font = 'bold 13px system-ui, sans-serif';
         jctx.fillText(line1, tx + boxW / 2, ty + pad);
 
-        jctx.fillStyle = isUnlocked ? _jt.textMid : _jt.textLo;
+        jctx.fillStyle = isUnlocked ? 'rgba(248,247,245,0.60)' : 'rgba(248,247,245,0.40)';
         jctx.font = '12px system-ui, sans-serif';
         jctx.fillText(line2, tx + boxW / 2, ty + pad + lineH);
         jctx.restore();
@@ -5978,22 +5942,23 @@
 
     // ── sky screen ("Общее небо") — zoomable galaxy canvas ──────────────────
 
-    const _SKY_WORLD      = 1_000_000; // virtual world size (px units)
-    const _SKY_CELL       = 50_000;    // procedural background star cell size → 20×20 grid
-    const _SKY_SMIN       = 0.00025;   // absolute floor (fallback before canvas is ready)
-    const _SKY_SMAX       = 4.0;
-    const _SKY_THRESH_DOT  = 0.0003;   // scale below → tiny heatmap dots; above → galaxy glow
-    const _SKY_THRESH_FULL = 0.003;    // scale above → full constellation render
+    const _SKY_WORLD      = 3000;
+    const _SKY_SMAX       = 3.0;
+    const _SKY_THRESH_DOT = 0.15;  // ниже → heatmap-точки (LOD1)
+    const _SKY_THRESH     = 0.50;  // выше → полное созвездие (LOD3), между → galaxy (LOD2)
+    const _SKY_CELL       = 300;   // размер ячейки процедурных звёзд
 
     let _skyMode  = 'global'; // 'global' | 'personal'
     let _skyData  = null, _skyPos = [];
-    let _skyScale = 0.0006, _skyOffX = 0, _skyOffY = 0;
+    let _skyScale = 0.22, _skyOffX = 0, _skyOffY = 0;
     let _skyRaf   = null, _skyOpen = false;
     let _skyCV    = null, _skyCX  = null;
     let _skyDrag  = null, _skyPinch = null;
-    let _skyAnimRaf = null;
-    let _skyLoadTimer = null; // debounce handle for bbox query
-    const _skyBgCache = new Map(); // "cx,cy" → stars[]  LRU, max 200 cells
+    let _skyAnimRaf  = null;
+    let _skyLoadTimer = null;
+    let _bgStars  = null; // оставляем для rank-up анимации
+    const _skyBgCache = new Map(); // "cx,cy" → stars[] LRU, max 200 cells
+    window._skyBgCacheRef = _skyBgCache; // регистрируем для applyTheme (без TDZ)
     let _mySkyNames = new Set(); // names of user's own saved constellations
 
     /**
@@ -6024,69 +5989,83 @@
       '255,255,255', // чистый белый
     ];
 
-    /**
-     * Процедурная генерация фоновых звёзд для ячейки (cx, cy).
-     * Использует детерминированный PRNG на основе координат ячейки —
-     * звёзды всегда одинаковые в одном и том же месте неба.
-     * 30 звёзд на ячейку; ячейки 50 000 × 50 000 ед., мир 20 × 20 ячеек.
-     */
-    function _skyGenCell(cx, cy) {
-      let seed = ((cx * 73856093) ^ (cy * 19349663)) >>> 0;
-      const rng = () => {
-        seed = Math.imul(seed ^ (seed >>> 16), 0x45d9f3b) >>> 0;
-        seed = Math.imul(seed ^ (seed >>> 16), 0x45d9f3b) >>> 0;
-        return ((seed ^ (seed >>> 16)) >>> 0) / 0x100000000;
-      };
-      const stars = [];
-      for (let i = 0; i < 30; i++) {
-        stars.push({
-          x:   cx * _SKY_CELL + rng() * _SKY_CELL,
-          y:   cy * _SKY_CELL + rng() * _SKY_CELL,
-          r:   0.3 + rng() * 1.5,
-          a:   0.06 + rng() * 0.30,
-          col: _BG_COLORS[Math.floor(rng() * _BG_COLORS.length)],
-        });
-      }
-      return stars;
+    function _skyEnsureBg() {
+      if (_bgStars) return;
+      // Позиции — Math.random() чтобы не было линейных артефактов хэша
+      // 700 мелких + 80 средних + 20 крупных, все — простые точки
+      _bgStars = [
+        ...Array.from({ length: 700 }, (_, i) => ({
+          x:   Math.random() * _SKY_WORLD,
+          y:   Math.random() * _SKY_WORLD,
+          r:   0.3 + _skyHash('bsr' + i) * 1.0,
+          a:   0.06 + _skyHash('bsa' + i) * 0.28,
+          col: _BG_COLORS[Math.floor(_skyHash('bsc' + i) * _BG_COLORS.length)],
+        })),
+        ...Array.from({ length: 80 }, (_, i) => ({
+          x:   Math.random() * _SKY_WORLD,
+          y:   Math.random() * _SKY_WORLD,
+          r:   1.1 + _skyHash('bmr' + i) * 1.3,
+          a:   0.14 + _skyHash('bma' + i) * 0.36,
+          col: _BG_COLORS[Math.floor(_skyHash('bmc' + i) * _BG_COLORS.length)],
+        })),
+        ...Array.from({ length: 20 }, (_, i) => ({
+          x:   Math.random() * _SKY_WORLD,
+          y:   Math.random() * _SKY_WORLD,
+          r:   2.0 + _skyHash('blr' + i) * 1.5,
+          a:   0.30 + _skyHash('bla' + i) * 0.30,
+          col: _BG_COLORS[Math.floor(_skyHash('blc' + i) * _BG_COLORS.length)],
+        })),
+      ];
     }
 
-    /** LRU-кэш процедурных звёзд; возвращает stars[] для ячейки, генерируя при промахе. */
+    /** Минимальный масштаб: мировой прямоугольник заполняет экран по наименьшей стороне. */
+    function _skyMinScale() {
+      if (!_skyCV) return 0.08;
+      return Math.min(_skyCV.width, _skyCV.height) / _SKY_WORLD;
+    }
+
+    /** Зажимает offset чтобы мир не уходил за экран. */
+    function _skyClampOffset() {
+      if (!_skyCV) return;
+      const W = _skyCV.width, H = _skyCV.height;
+      const wW = _SKY_WORLD * _skyScale, wH = _SKY_WORLD * _skyScale;
+      if (wW <= W) { _skyOffX = (W - wW) / 2; }
+      else { _skyOffX = Math.min(0, Math.max(W - wW, _skyOffX)); }
+      if (wH <= H) { _skyOffY = (H - wH) / 2; }
+      else { _skyOffY = Math.min(0, Math.max(H - wH, _skyOffY)); }
+    }
+
+    /** Возвращает звёзды ячейки (cx, cy) из LRU-кэша. */
     function _skyGetCellStars(cx, cy) {
       const key = cx + ',' + cy;
       if (_skyBgCache.has(key)) {
         const s = _skyBgCache.get(key);
-        _skyBgCache.delete(key); _skyBgCache.set(key, s); // refresh LRU
+        _skyBgCache.delete(key); _skyBgCache.set(key, s); // LRU: поднимаем вверх
         return s;
       }
-      const s = _skyGenCell(cx, cy);
+      // Генерируем детерминированно через _skyHash
+      const stars = [];
+      const density = 28; // звёзд на ячейку
+      for (let i = 0; i < density; i++) {
+        const sx = (cx + _skyHash(cx + '_' + cy + '_x' + i)) * _SKY_CELL;
+        const sy = (cy + _skyHash(cx + '_' + cy + '_y' + i)) * _SKY_CELL;
+        stars.push({
+          x: sx, y: sy,
+          r: 0.3 + _skyHash(cx + '_' + cy + '_r' + i) * 1.2,
+          a: 0.06 + _skyHash(cx + '_' + cy + '_a' + i) * 0.26,
+          col: _BG_COLORS[Math.floor(_skyHash(cx + '_' + cy + '_c' + i) * _BG_COLORS.length)],
+        });
+      }
       if (_skyBgCache.size >= 200) _skyBgCache.delete(_skyBgCache.keys().next().value);
-      _skyBgCache.set(key, s);
-      return s;
+      _skyBgCache.set(key, stars);
+      return stars;
     }
 
     function _skyW2S(wx, wy) {
       return { x: wx * _skyScale + _skyOffX, y: wy * _skyScale + _skyOffY };
     }
 
-    /**
-     * Минимальный масштаб: мир всегда покрывает весь экран с запасом ×1.5
-     * (при min-zoom видно ~2/3 мира, края никогда не видны).
-     */
-    function _skyMinScale() {
-      if (!_skyCV) return _SKY_SMIN;
-      return Math.max(_SKY_SMIN, Math.max(_skyCV.width, _skyCV.height) / _SKY_WORLD * 1.5);
-    }
-
     function _skyClamp(s) { return Math.max(_skyMinScale(), Math.min(_SKY_SMAX, s)); }
-
-    /** Зажимает смещение так, чтобы мир всегда закрывал весь экран. */
-    function _skyClampOffset() {
-      if (!_skyCV) return;
-      const W = _skyCV.width, H = _skyCV.height;
-      const worldPx = _SKY_WORLD * _skyScale;
-      _skyOffX = Math.min(0, Math.max(W - worldPx, _skyOffX));
-      _skyOffY = Math.min(0, Math.max(H - worldPx, _skyOffY));
-    }
 
     function _skyZoom(newS, cx, cy) {
       newS = _skyClamp(newS);
@@ -6095,13 +6074,12 @@
       _skyOffX = cx - wx * newS;
       _skyOffY = cy - wy * newS;
       _skyScale = newS;
-      _skyClampOffset();
     }
 
     function _skyItemToPos(item, fadeIn) {
-      const margin = 50_000; // 5% от мира с каждой стороны
+      const margin = 200;
       const id = String(item.id || item.name || '');
-      // Приоритет: gx/gy из Supabase (после миграции); иначе — детерминированный хэш
+      // Если сервер вернул gx/gy — используем их (0-1 → мировые координаты)
       const wx = (item.gx != null)
         ? item.gx * _SKY_WORLD
         : margin + _skyHash(id + '_x') * (_SKY_WORLD - 2 * margin);
@@ -6112,7 +6090,7 @@
         id,
         name:       item.name || '—',
         wx, wy,
-        hasCoord:   item.gx != null, // true если координаты пришли с сервера
+        hasCoord:   item.gx != null,
         c:          item.data || {},
         opacity:    fadeIn ? 0 : 1,
         fadeStartT: fadeIn ? performance.now() : 0,
@@ -6121,18 +6099,18 @@
 
     function _skyBuildPos(data) {
       const placed = [];
-      const MIN_DIST = 40_000; // ~4% мира между соседними созвездиями
+      const MIN_DIST = 120;
       _skyPos = data.map(item => {
         const p = _skyItemToPos(item, false);
-        // Для созвездий без серверных координат применяем клиентский collision avoidance
+        // Collision avoidance только для созвездий без серверных координат
         if (!p.hasCoord) {
           let tries = 0;
           while (tries < 30) {
             const clash = placed.find(q => Math.hypot(p.wx - q.wx, p.wy - q.wy) < MIN_DIST);
             if (!clash) break;
             const angle = _skyHash(item.id + '_nudge' + tries) * Math.PI * 2;
-            p.wx = Math.max(50_000, Math.min(_SKY_WORLD - 50_000, p.wx + Math.cos(angle) * MIN_DIST));
-            p.wy = Math.max(50_000, Math.min(_SKY_WORLD - 50_000, p.wy + Math.sin(angle) * MIN_DIST));
+            p.wx = Math.max(200, Math.min(_SKY_WORLD - 200, p.wx + Math.cos(angle) * MIN_DIST));
+            p.wy = Math.max(200, Math.min(_SKY_WORLD - 200, p.wy + Math.sin(angle) * MIN_DIST));
             tries++;
           }
         }
@@ -6150,45 +6128,42 @@
       ctx.fillStyle = sk.skyBg;
       ctx.fillRect(0, 0, W, H);
 
-      // Culling bounds in world coords (with padding for smooth pop-in)
-      const pad = 60_000;
-      const wL = -_skyOffX / _skyScale - pad,  wR = (W - _skyOffX) / _skyScale + pad;
-      const wT = -_skyOffY / _skyScale - pad,  wB = (H - _skyOffY) / _skyScale + pad;
+      // Culling bounds in world coords (generous pad for smooth pop-in)
+      const pad = Math.max(300, 400 / _skyScale);
+      const wL = (-_skyOffX) / _skyScale - pad,  wR = (W - _skyOffX) / _skyScale + pad;
+      const wT = (-_skyOffY) / _skyScale - pad,  wB = (H - _skyOffY) / _skyScale + pad;
 
-      // ── Procedural background stars (cell-based) ──────────────────────
-      if (sk.skyBgStar && _skyScale >= _SKY_THRESH_DOT * 0.5) {
+      // ── Процедурные фоновые звёзды (cell-based) ─────────────────────────
+      if (sk.skyBgStar) {
         const cxMin = Math.floor(wL / _SKY_CELL);
-        const cxMax = Math.min(Math.ceil(wR / _SKY_CELL), cxMin + 32);
+        const cxMax = Math.min(Math.ceil(wR / _SKY_CELL), cxMin + 24);
         const cyMin = Math.floor(wT / _SKY_CELL);
-        const cyMax = Math.min(Math.ceil(wB / _SKY_CELL), cyMin + 32);
+        const cyMax = Math.min(Math.ceil(wB / _SKY_CELL), cyMin + 24);
         for (let cx = cxMin; cx <= cxMax; cx++) {
           for (let cy = cyMin; cy <= cyMax; cy++) {
             const stars = _skyGetCellStars(cx, cy);
             stars.forEach(s => {
+              if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) return;
               const { x, y } = _skyW2S(s.x, s.y);
               const r = Math.max(0.4, Math.min(1.8, s.r));
-              ctx.beginPath();
-              ctx.arc(x, y, r, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${s.col},${s.a})`;
-              ctx.fill();
+              ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
             });
           }
         }
       }
 
-      // Highlight state: elapsed ms since "find mine" was triggered (-1 = inactive)
+      // Highlight state
       const _now = performance.now();
       let _hlElapsed = -1;
       if (_skyHighlightPulseT > 0) {
         _hlElapsed = _now - _skyHighlightPulseT;
         if (_hlElapsed >= _SKY_PULSE_DUR) {
-          _skyHighlightPulseT = 0;
-          _skyHighlightId     = null;
-          _hlElapsed          = -1;
+          _skyHighlightPulseT = 0; _skyHighlightId = null; _hlElapsed = -1;
         }
       }
 
-      // ── LOD 1: Heatmap dots (scale < _SKY_THRESH_DOT) ────────────────
+      // ── LOD 1: Heatmap точки (очень маленький масштаб) ────────────────────
       if (_skyScale < _SKY_THRESH_DOT) {
         _skyPos.forEach(p => {
           if (p.wx < wL || p.wx > wR || p.wy < wT || p.wy > wB) return;
@@ -6200,15 +6175,15 @@
           ctx.fill();
         });
 
-      // ── LOD 2: Galaxy glow OR simple dots ────────────────────────────
-      } else if (_skyScale < _SKY_THRESH_FULL) {
+      // ── LOD 2: Galaxy glow / simple dots ──────────────────────────────────
+      } else if (_skyScale < _SKY_THRESH) {
         _skyPos.forEach(p => {
           if (p.wx < wL || p.wx > wR || p.wy < wT || p.wy > wB) return;
           if (p.opacity < 1 && p.fadeStartT > 0)
             p.opacity = Math.min(1, (_now - p.fadeStartT) / 1000);
           ctx.globalAlpha = p.opacity;
           const { x, y } = _skyW2S(p.wx, p.wy);
-          const r = 1.2 + 5 * (_skyScale / _SKY_THRESH_FULL);
+          const r = 1.2 + 5 * (_skyScale / _SKY_THRESH);
           const isHL   = _skyHighlightId && p.name === _skyHighlightId;
           const isMine = !isHL && (_skyMode === 'personal' || p.id.startsWith('local_') || _mySkyNames.has(p.name));
           const blinkMult = (isHL && _hlElapsed >= 0)
@@ -6218,10 +6193,9 @@
             // Stargazer: glowing halos
             const haloR = r * (isHL ? 5 : 2.2);
             const g = ctx.createRadialGradient(x, y, 0, x, y, haloR);
-            const bgStop = sk.skyBg.startsWith('#0') ? 'rgba(10,6,30,0)' : sk.skyBg + '00';
             if (isHL) {
               g.addColorStop(0,   `rgba(255,252,242,${blinkMult.toFixed(3)})`);
-              g.addColorStop(0.35,`rgba(230,218,200,${(0.38 * blinkMult).toFixed(3)})`);
+              g.addColorStop(0.35,`rgba(230,218,200,${(0.38*blinkMult).toFixed(3)})`);
               g.addColorStop(1,   'rgba(10,6,30,0)');
             } else if (isMine) {
               g.addColorStop(0,   'rgba(255,245,220,0.42)');
@@ -6237,11 +6211,11 @@
             const coreR = isHL ? Math.max(1.2, r * 0.55) : Math.max(0.8, r * 0.28);
             ctx.beginPath(); ctx.arc(x, y, coreR, 0, Math.PI * 2);
             ctx.fillStyle = isHL
-              ? `rgba(255,252,245,${(0.72 + 0.28 * blinkMult).toFixed(3)})`
+              ? `rgba(255,252,245,${(0.72 + 0.28*blinkMult).toFixed(3)})`
               : isMine ? 'rgba(255,248,230,0.88)' : 'rgba(240,240,255,0.78)';
             ctx.fill();
           } else {
-            // Non-stargazer themes: simple crisp dots
+            // Светлые темы: чёткие точки
             const dotR = isHL ? Math.max(2.5, r * 0.6) : Math.max(1.4, r * 0.35);
             ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI * 2);
             ctx.fillStyle = isHL ? sk.skyDotHL : isMine ? sk.skyDotMine : sk.skyDotOther;
@@ -6250,8 +6224,9 @@
           ctx.globalAlpha = 1;
         });
 
-      // ── LOD 3: Full constellation render ─────────────────────────────
+      // ── LOD 3: Полное созвездие ────────────────────────────────────────────
       } else {
+        const CSIZE = 90;
         _skyPos.forEach(p => {
           if (p.wx < wL || p.wx > wR || p.wy < wT || p.wy > wB) return;
           if (p.opacity < 1 && p.fadeStartT > 0)
@@ -6260,7 +6235,7 @@
           const { x: cx, y: cy } = _skyW2S(p.wx, p.wy);
           const pts = p.c.points || [];
           const lns = p.c.lines  || [];
-          const sz  = Math.max(20, Math.min(300, (_skyScale / _SKY_THRESH_FULL) * 20));
+          const sz  = CSIZE * _skyScale;
           const wp  = (p.c.winner >= 0) ? p.c.winner : 0;
           const isHL   = _skyHighlightId && p.name === _skyHighlightId;
           const isMine = !isHL && (_skyMode === 'personal' || p.id.startsWith('local_') || _mySkyNames.has(p.name));
@@ -6274,11 +6249,9 @@
 
           const mpx = pt => cx + (pt.x - 0.5) * sz;
           const mpy = pt => cy + (pt.y - 0.5) * sz;
-
           const aScale = isHL ? 1.0 : isMine ? 0.80 : 0.50;
           ctx.globalAlpha = p.opacity * aScale;
 
-          // Lines
           const lr = sk.skyLineRGB;
           if (sk.skyGlow) {
             const lw1 = Math.max(2.0, sz * 0.038);
@@ -6297,8 +6270,19 @@
               ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
               ctx.strokeStyle = `rgba(${lr},0.88)`; ctx.lineWidth = lw3; ctx.stroke();
             });
+            const _prevR = RADIUS;
+            RADIUS = Math.max(1, Math.round(sz * 0.013));
+            const hlBlink = isHL && _hlElapsed >= 0
+              ? 0.3 + 0.4 * Math.abs(Math.sin(_hlElapsed / 300 * Math.PI)) : 0;
+            const boost = isHL ? 0.4 + hlBlink : isMine ? 0.3 : 0.1;
+            pts.forEach((pt, i) => {
+              if (deg[i] === 0) return;
+              drawStarPointTo(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2), false, false, false, boost);
+            });
+            ctx.filter = 'none'; RADIUS = _prevR;
           } else {
-            const lw = Math.max(0.8, sz * 0.014);
+            // Светлые темы: тонкие линии + точки
+            const lw = Math.max(0.8, sz * 0.012);
             lns.forEach(([key, pl]) => {
               if (pl !== wp) return;
               const [a, b] = key.split('-').map(Number);
@@ -6306,41 +6290,26 @@
               const ax = mpx(pts[a]), ay = mpy(pts[a]);
               const bx = mpx(pts[b]), by = mpy(pts[b]);
               ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-              ctx.strokeStyle = `rgba(${lr},0.72)`; ctx.lineWidth = lw; ctx.stroke();
+              ctx.strokeStyle = `rgba(${lr},0.70)`; ctx.lineWidth = lw; ctx.stroke();
             });
-          }
-
-          // Star dots
-          const hlBlink = isHL && _hlElapsed >= 0
-            ? 0.3 + 0.4 * Math.abs(Math.sin(_hlElapsed / 300 * Math.PI)) : 0;
-          if (sk.skyGlow) {
-            const _prevR = RADIUS;
-            RADIUS = Math.max(1, Math.round(sz * 0.013));
-            const boost = isHL ? 0.4 + hlBlink : isMine ? 0.3 : 0.1;
-            pts.forEach((pt, i) => {
-              if (deg[i] === 0) return;
-              drawStarPointTo(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2), false, false, false, boost);
-            });
-            ctx.filter = 'none';
-            RADIUS = _prevR;
-          } else {
             const sr = sk.skyStarRGB;
-            const dotR = Math.max(1.5, sz * 0.025);
+            const dotR = Math.max(1.5, sz * 0.022);
+            const hlBlink = isHL && _hlElapsed >= 0
+              ? 0.3 + 0.4 * Math.abs(Math.sin(_hlElapsed / 300 * Math.PI)) : 0;
             const blinkA = isHL ? (0.65 + 0.35 * hlBlink) : isMine ? 0.85 : 0.65;
             pts.forEach((pt, i) => {
               if (deg[i] === 0) return;
               ctx.beginPath();
               ctx.arc(mpx(pt), mpy(pt), dotR * Math.min(deg[i], 3) * 0.5, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${sr},${blinkA})`;
-              ctx.fill();
+              ctx.fillStyle = `rgba(${sr},${blinkA})`; ctx.fill();
             });
           }
 
-          // Name label
-          if (_skyScale > _SKY_THRESH_FULL * 2) {
+          // Подпись
+          if (_skyScale > 0.65) {
             ctx.globalAlpha = p.opacity * (isHL ? 0.92 : isMine ? 0.60 : 0.38);
-            const fs = Math.min(13, Math.max(9, sz * 0.1));
-            ctx.font      = isHL ? `500 ${fs}px sans-serif` : `300 ${fs}px sans-serif`;
+            const fs = Math.min(13, 9 * _skyScale);
+            ctx.font = isHL ? `500 ${fs}px sans-serif` : `300 ${fs}px sans-serif`;
             ctx.fillStyle = isHL ? sk.skyLabelHL : isMine ? sk.skyLabelMine : sk.skyLabelOther;
             ctx.textAlign = 'center';
             ctx.fillText(p.name, cx, cy + sz / 2 + fs + 4);
@@ -6353,12 +6322,50 @@
 
     function _skyLoop() { _skyDraw(); _skyRaf = requestAnimationFrame(_skyLoop); }
 
+    /**
+     * Debounced viewport query — подгружает созвездия в текущем viewport.
+     * Вызывается из обработчиков pan/zoom.
+     */
+    function _skyBboxLoad() {
+      if (!_skyCV || !_skyOpen || _skyMode !== 'global') return;
+      clearTimeout(_skyLoadTimer);
+      _skyLoadTimer = setTimeout(async () => {
+        if (!navigator.onLine) return;
+        const W = _skyCV.width, H = _skyCV.height;
+        const wL = (-_skyOffX) / _skyScale;
+        const wT = (-_skyOffY) / _skyScale;
+        const wR = (W - _skyOffX) / _skyScale;
+        const wB = (H - _skyOffY) / _skyScale;
+        // Нормализуем в [0,1] — gx/gy хранятся как доли _SKY_WORLD
+        const x0 = Math.max(0, wL / _SKY_WORLD);
+        const y0 = Math.max(0, wT / _SKY_WORLD);
+        const x1 = Math.min(1, wR / _SKY_WORLD);
+        const y1 = Math.min(1, wB / _SKY_WORLD);
+        // Пропускаем если viewport вне мира или охватывает всё (слишком далеко)
+        if (x0 >= x1 || y0 >= y1 || (x1 - x0) > 0.95) return;
+        const { data, error } = await sb.from('constellations')
+          .select('id, name, data, user_id, gx, gy, created_at')
+          .gte('gx', x0).lte('gx', x1)
+          .gte('gy', y0).lte('gy', y1)
+          .order('created_at', { ascending: false })
+          .limit(300);
+        if (error || !data || !data.length) return;
+        const seen = new Set(_skyData ? _skyData.map(d => d.id) : []);
+        const fresh = data.filter(d => !seen.has(d.id));
+        if (!fresh.length) return;
+        _skyData = [...(_skyData || []), ...fresh];
+        const uid = _skyGetUserId();
+        if (uid) fresh.forEach(d => { if (d.user_id === uid) _mySkyNames.add(d.name); });
+        _skyBuildPos(_skyData);
+      }, 150);
+    }
+
     function _skyFlyToHighlight() {
       if (!_skyHighlightId || !_skyPos.length || !_skyCV) return;
       const t = _skyPos.find(p => p.name === _skyHighlightId);
       if (!t) return;
       const W = _skyCV.width, H = _skyCV.height;
-      const ts = 0.02;
+      const ts = 1.2;
       const tx = W / 2 - t.wx * ts, ty = H / 2 - t.wy * ts;
       const s0 = _skyScale, x0 = _skyOffX, y0 = _skyOffY;
       const dur = 700, t0 = performance.now();
@@ -6431,47 +6438,6 @@
     }
 
     /**
-     * Debounced viewport bbox query — подгружает созвездия, попадающие в текущий viewport.
-     * Вызывается из обработчиков pan/zoom с задержкой 150 мс.
-     * Дополняет _skyData новыми элементами без полного перезапуска.
-     */
-    function _skyBboxLoad() {
-      if (!_skyCV || !_skyOpen || _skyMode !== 'global') return;
-      clearTimeout(_skyLoadTimer);
-      _skyLoadTimer = setTimeout(async () => {
-        if (!navigator.onLine) return;
-        const W = _skyCV.width, H = _skyCV.height;
-        // viewport corners in world coordinates
-        const wL = (-_skyOffX) / _skyScale;
-        const wT = (-_skyOffY) / _skyScale;
-        const wR = (W - _skyOffX) / _skyScale;
-        const wB = (H - _skyOffY) / _skyScale;
-        // normalize to [0,1] — gx/gy are stored as fractions of _SKY_WORLD
-        const x0 = Math.max(0, wL / _SKY_WORLD);
-        const y0 = Math.max(0, wT / _SKY_WORLD);
-        const x1 = Math.min(1, wR / _SKY_WORLD);
-        const y1 = Math.min(1, wB / _SKY_WORLD);
-        // skip if viewport is outside world or covers everything (zoomed way out)
-        if (x0 >= x1 || y0 >= y1 || (x1 - x0) > 0.95) return;
-        const { data, error } = await sb.from('constellations')
-          .select('id, name, data, user_id, gx, gy, created_at')
-          .gte('gx', x0).lte('gx', x1)
-          .gte('gy', y0).lte('gy', y1)
-          .order('created_at', { ascending: false })
-          .limit(300);
-        if (error || !data || !data.length) return;
-        // merge into _skyData — avoid duplicates by id
-        const seen = new Set(_skyData ? _skyData.map(d => d.id) : []);
-        const fresh = data.filter(d => !seen.has(d.id));
-        if (!fresh.length) return;
-        _skyData = [...(_skyData || []), ...fresh];
-        const uid = _skyGetUserId();
-        if (uid) fresh.forEach(d => { if (d.user_id === uid) _mySkyNames.add(d.name); });
-        _skyBuildPos(_skyData);
-      }, 150);
-    }
-
-    /**
      * Загружает глобальное небо из Supabase.
      * При отсутствии сети или превышении таймаута 6с — показывает кнопку «Повторить».
      */
@@ -6534,13 +6500,15 @@
         const saved = JSON.parse(localStorage.getItem('saved_constellations') || '[]');
         _mySkyNames = new Set(saved.map(s => s.name));
       } catch(e) { _mySkyNames = new Set(); }
+      _skyEnsureBg(); // для rank-up анимаций (не используется в skyDraw)
       document.getElementById('sky-hub-screen').style.display = 'none';
       document.getElementById('sky-screen').style.display = 'flex';
       _skyCV = document.getElementById('sky-canvas');
       _skyCV.width  = window.innerWidth;
       _skyCV.height = window.innerHeight;
       _skyCX = _skyCV.getContext('2d');
-      _skyScale = _skyMinScale();  // начальный масштаб ≥ minScale (мир заполняет экран)
+      _skyCV.style.background = (THEMES[activeTheme] || THEMES.stargazer).skyBg;
+      _skyScale = Math.max(0.22, _skyMinScale()); // мир заполняет экран
       _skyOffX  = _skyCV.width  / 2 - _SKY_WORLD / 2 * _skyScale;
       _skyOffY  = _skyCV.height / 2 - _SKY_WORLD / 2 * _skyScale;
       _skyClampOffset();
@@ -6593,7 +6561,7 @@
       _skyHighlightId = t.name;
       _skyHighlightPulseT = performance.now();
       const W = _skyCV.width, H = _skyCV.height;
-      const ts = 0.02;
+      const ts = 1.2;
       const tx = W / 2 - t.wx * ts, ty = H / 2 - t.wy * ts;
       const s0 = _skyScale, x0 = _skyOffX, y0 = _skyOffY;
       const dur = 700, t0 = performance.now();
@@ -6622,8 +6590,6 @@
         return;
       }
       _skyMineIdx = (_skyMineIdx + dir + mine.length) % mine.length;
-      playSound('twinkle');
-      haptic('light');
       _skyFlyCto(mine[_skyMineIdx]);
     }
 
@@ -6661,8 +6627,6 @@
     // Mouse drag & wheel
     const _skyEl = document.getElementById('sky-canvas');
     _skyEl.addEventListener('mousedown', e => {
-      // Cancel any in-flight fly animation so it doesn't fight the drag
-      if (_skyAnimRaf) { cancelAnimationFrame(_skyAnimRaf); _skyAnimRaf = null; }
       _skyDrag = { x: e.clientX, y: e.clientY, ox: _skyOffX, oy: _skyOffY };
     });
     window.addEventListener('mousemove', e => {
@@ -6670,8 +6634,6 @@
       _skyOffX = _skyDrag.ox + (e.clientX - _skyDrag.x);
       _skyOffY = _skyDrag.oy + (e.clientY - _skyDrag.y);
       _skyClampOffset();
-      // Update drag reference to current clamped position — prevents "dead zone"
-      // accumulation at world edges (view no longer jumps on direction reversal)
       _skyDrag.ox = _skyOffX; _skyDrag.oy = _skyOffY;
       _skyDrag.x  = e.clientX; _skyDrag.y  = e.clientY;
       _skyBboxLoad();
@@ -6681,14 +6643,13 @@
       if (!_skyOpen) return;
       e.preventDefault();
       _skyZoom(_skyScale * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX, e.clientY);
+      _skyClampOffset();
       _skyBboxLoad();
     }, { passive: false });
 
     // Touch pan + pinch
     _skyEl.addEventListener('touchstart', e => {
       e.preventDefault();
-      // Cancel any in-flight fly animation — otherwise it fights with touch input
-      if (_skyAnimRaf) { cancelAnimationFrame(_skyAnimRaf); _skyAnimRaf = null; }
       if (e.touches.length === 1) {
         const t = e.touches[0];
         _skyDrag = { x: t.clientX, y: t.clientY, ox: _skyOffX, oy: _skyOffY };
@@ -6714,7 +6675,6 @@
         _skyOffX = _skyDrag.ox + (t.clientX - _skyDrag.x);
         _skyOffY = _skyDrag.oy + (t.clientY - _skyDrag.y);
         _skyClampOffset();
-        // Update drag reference — prevents dead-zone jump at world edges
         _skyDrag.ox = _skyOffX; _skyDrag.oy = _skyOffY;
         _skyDrag.x  = t.clientX; _skyDrag.y  = t.clientY;
         _skyBboxLoad();
@@ -6728,6 +6688,7 @@
         _skyOffX = _skyPinch.mx - wx * ns;
         _skyOffY = _skyPinch.my - wy * ns;
         _skyScale = ns;
+        _skyClampOffset();
         _skyBboxLoad();
       }
     }, { passive: false });
@@ -7428,7 +7389,6 @@
 
     document.getElementById('const-detail-publish-btn').addEventListener('click', async () => {
       if (!_detailItem || _detailItem.publishedAt) return;
-      haptic('medium');
       const pb = document.getElementById('const-detail-publish-btn');
       pb.textContent = '...'; pb.disabled = true;
 
@@ -7438,6 +7398,8 @@
       arr[_detailIdx].skyAddr = _constellationAddress(_detailItem.name);
       _persistSaved(arr);
       _detailItem = arr[_detailIdx];
+      playSound('twinkle');
+      haptic('medium');
       sb.from('constellations').insert({ name: _detailItem.name, data: arr[_detailIdx], user_id: _skyGetUserId(), gx: Math.random(), gy: Math.random() }).catch(() => {});
 
       // Play animation, then update UI
@@ -7852,9 +7814,10 @@
         gx: Math.random(),
         gy: Math.random(),
       });
+      playSound('twinkle');
+      haptic('heavy');
 
       // 3. Анимация: небо открывается, созвездие летит в точку
-      haptic('heavy');
       saveToSkyAnimation(name, async () => {
         await supabasePromise; // ждём завершения (обычно уже готово)
         saveBtn.style.display = 'none';
