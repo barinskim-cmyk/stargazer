@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stargazer — All Screens</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1c1c1c;
+    font-family: 'Raleway', -apple-system, sans-serif;
+    padding: 48px 40px 80px;
+  }
+
+  /* ── Canvas layout ── */
+  .canvas-title {
+    color: #555;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .screens-grid {
+    display: grid;
+    grid-template-columns: 390px 390px 390px;
+    gap: 60px 48px;
+    justify-content: center;
+  }
+  .frame-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .frame-label {
+    color: #666;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    align-self: flex-start;
+  }
+  .frame-num {
+    color: #444;
+    margin-right: 6px;
+  }
+
+  /* ── iPhone frame ── */
+  .iphone {
+    width: 390px;
+    height: 844px;
+    border-radius: 47px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
+    outline: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.04);
+  }
+  /* Notch / dynamic island */
+  .iphone::before {
+    content: '';
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    width: 120px; height: 34px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 100;
+  }
+  /* Status bar time */
+  .status-bar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 59px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 28px 8px;
+    z-index: 50;
+    pointer-events: none;
+  }
+  .status-time {
+    font-size: 15px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0;
+  }
+  .status-icons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0.8;
+  }
+  .status-icons svg { width: 16px; height: 12px; fill: #fff; }
+
+  /* ── Common colors / tokens ── */
+  :root {
+    --bg-dark:    #060612;
+    --bg-mid:     #1a1a2e;
+    --bg-panel:   rgba(16,15,13,0.92);
+    --warm-core:  rgba(255,245,210,0.95);
+    --warm-mid:   rgba(255,245,210,0.65);
+    --warm-dim:   rgba(255,245,210,0.30);
+    --warm-ghost: rgba(255,245,210,0.12);
+    --btn-border: rgba(255,245,210,0.55);
+    --panel-border: rgba(255,245,210,0.22);
+    --amber:      #FFB347;
+    --amber-glow: rgba(255,179,71,0.25);
+  }
+
+
+  /* ════════════════════════════════
+     SCREEN 1 — AUTH
+  ════════════════════════════════ */
+  .s-auth {
+    background: var(--bg-mid);
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    padding: 80px 36px 60px;
+    position: relative;
+  }
+  .s-auth .bg-stars {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .s-auth .star-dot {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,245,210,0.6);
+  }
+  .auth-logo { font-size: 11px; letter-spacing: 10px; color: var(--warm-dim); text-transform: uppercase; margin-bottom: 8px; }
+  .auth-title { font-size: 42px; font-weight: 700; letter-spacing: 6px; color: #fff; margin-bottom: 4px; }
+  .auth-subtitle { font-size: 11px; letter-spacing: 4px; color: var(--warm-dim); margin-bottom: 52px; }
+  .auth-star-icon {
+    width: 72px; height: 72px; margin-bottom: 48px;
+    position: relative; display: flex; align-items: center; justify-content: center;
+  }
+  .auth-star-icon svg { width: 48px; height: 48px; }
+
+  .btn-apple {
+    width: 100%; height: 52px;
+    background: #fff; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; font-size: 15px; font-weight: 600; color: #000;
+    margin-bottom: 12px;
+  }
+  .btn-google {
+    width: 100%; height: 52px;
+    background: transparent;
+    border: 1px solid var(--btn-border);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; font-size: 15px; font-weight: 500; color: var(--warm-core);
+    margin-bottom: 28px;
+  }
+  .btn-skip {
+    font-size: 13px; color: var(--warm-dim); letter-spacing: 0.5px;
+    border: none; background: none; cursor: pointer;
+  }
+  .btn-divider { font-size: 11px; color: #333; letter-spacing: 2px; margin-bottom: 20px; }
+
+
+  /* ════════════════════════════════
+     SCREEN 2 — HOME
+  ════════════════════════════════ */
+  .s-home {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  .home-bg-stars { position: absolute; inset: 0; pointer-events: none; }
+  .home-content {
+    position: relative; z-index: 2;
+    padding: 72px 24px 0;
+    display: flex; flex-direction: column; height: 100%;
+  }
+  .home-profile {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 32px;
+  }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: rgba(255,245,210,0.08);
+    border: 1px solid var(--panel-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .profile-name { font-size: 16px; font-weight: 600; color: var(--warm-core); }
+  .profile-rank {
+    font-size: 11px; color: var(--warm-dim); letter-spacing: 2px;
+    display: flex; align-items: center; gap: 6px; margin-top: 2px;
+  }
+  .rank-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); }
+
+  .home-section-label { font-size: 10px; letter-spacing: 3px; color: #333; text-transform: uppercase; margin-bottom: 14px; }
+  .constellation-cards { display: flex; gap: 10px; margin-bottom: 32px; }
+  .constellation-card {
+    flex: 1; height: 88px;
+    background: rgba(255,245,210,0.04);
+    border: 1px solid rgba(255,245,210,0.10);
+    border-radius: 14px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 6px;
+    overflow: hidden; position: relative;
+  }
+  .constellation-card canvas-mini {
+    width: 48px; height: 38px;
+    display: block;
+  }
+  .card-name { font-size: 10px; color: var(--warm-dim); letter-spacing: 1px; }
+
+  .btn-play {
+    width: 100%; height: 58px;
+    background: transparent;
+    border: 1px solid var(--btn-border);
+    border-radius: 16px;
+    font-size: 16px; font-weight: 600; letter-spacing: 3px;
+    color: var(--warm-core); text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .home-nav-row { display: flex; gap: 10px; margin-bottom: 0; }
+  .btn-nav {
+    flex: 1; height: 48px;
+    background: transparent;
+    border: 1px solid rgba(255,245,210,0.25);
+    border-radius: 12px;
+    font-size: 12px; color: var(--warm-mid); letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .home-stats {
+    margin-top: auto; margin-bottom: 40px;
+    display: flex; gap: 0;
+    border: 1px solid rgba(255,245,210,0.08);
+    border-radius: 14px; overflow: hidden;
+  }
+  .stat-item {
+    flex: 1; padding: 14px 0; text-align: center;
+    border-right: 1px solid rgba(255,245,210,0.08);
+  }
+  .stat-item:last-child { border-right: none; }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--warm-core); line-height: 1; }
+  .stat-lbl { font-size: 9px; color: #333; letter-spacing: 2px; text-transform: uppercase; margin-top: 4px; }
+
+
+  /* ════════════════════════════════
+     SCREEN 3 — GAME SETUP
+  ════════════════════════════════ */
+  .s-setup {
+    background: var(--bg-mid);
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; padding: 100px 32px 60px;
+    position: relative;
+  }
+  .setup-title { font-size: 11px; letter-spacing: 5px; color: var(--warm-dim); text-transform: uppercase; margin-bottom: 8px; }
+  .setup-heading { font-size: 22px; font-weight: 600; color: var(--warm-core); letter-spacing: 2px; margin-bottom: 48px; text-align: center; }
+  .length-options { width: 100%; display: flex; flex-direction: column; gap: 12px; margin-bottom: 40px; }
+  .length-btn {
+    width: 100%; height: 58px;
+    background: transparent;
+    border: 1px solid var(--btn-border);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    color: var(--warm-core); font-size: 14px; font-weight: 500; letter-spacing: 1px;
+  }
+  .length-btn.active {
+    background: rgba(255,245,210,0.06);
+    border-color: rgba(255,245,210,0.80);
+  }
+  .length-btn .stars-count { font-size: 11px; color: var(--warm-dim); letter-spacing: 2px; }
+  .back-btn-small {
+    position: absolute; top: 68px; left: 24px;
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--warm-mid); font-size: 20px;
+    background: none; border: none;
+  }
+  .ai-toggle-row {
+    width: 100%;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 4px; margin-bottom: 32px;
+  }
+  .toggle-label { font-size: 13px; color: var(--warm-mid); }
+  .toggle {
+    width: 48px; height: 28px; border-radius: 14px;
+    background: rgba(255,245,210,0.12);
+    border: 1px solid var(--btn-border);
+    position: relative;
+  }
+  .toggle-thumb {
+    width: 22px; height: 22px; border-radius: 11px;
+    background: var(--warm-core); position: absolute;
+    top: 2px; right: 2px;
+  }
+
+
+  /* ════════════════════════════════
+     SCREEN 4 — ACTIVE GAME
+  ════════════════════════════════ */
+  .s-game {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .game-top-panel {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    background: rgba(16,15,13,0.92);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 56px 20px 12px;
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px;
+    align-items: end;
+  }
+  .player-cell { display: flex; flex-direction: column; gap: 2px; }
+  .player-cell.right { align-items: flex-end; }
+  .p-name { font-size: 13px; font-weight: 700; color: var(--warm-core); }
+  .p-score { font-size: 28px; font-weight: 700; color: var(--warm-core); line-height: 1; }
+  .p-sub { font-size: 11px; color: var(--warm-dim); }
+  .turn-badge {
+    background: transparent;
+    border: 1px solid rgba(255,245,210,0.38);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 12px; color: var(--warm-core);
+    text-align: center; white-space: nowrap; align-self: center;
+  }
+  .game-canvas-area {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .game-canvas-svg { width: 100%; height: 100%; }
+
+  .game-bottom-panel {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+    background: rgba(16,15,13,0.92);
+    border-top: 1px solid var(--panel-border);
+    padding: 12px 20px 36px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .bottom-btn {
+    height: 44px; padding: 0 18px;
+    background: transparent;
+    border: 1px solid var(--btn-border);
+    border-radius: 8px;
+    font-size: 13px; color: var(--warm-core); letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .hint-btn {
+    width: 44px; height: 44px;
+    background: transparent;
+    border: 1px solid var(--btn-border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--warm-mid);
+  }
+
+
+  /* ════════════════════════════════
+     SCREEN 5 — GAME MINIMAL (UI Hidden)
+  ════════════════════════════════ */
+  .s-game-min {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .ui-toggle-btn {
+    position: absolute; bottom: 40px; right: 20px; z-index: 10;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,245,210,0.14);
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,245,210,0.5); font-size: 14px; letter-spacing: 1px;
+  }
+
+
+  /* ════════════════════════════════
+     SCREEN 6 — WIN / SAVE
+  ════════════════════════════════ */
+  .s-win {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .win-overlay {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding: 0 28px 52px;
+  }
+  .win-title { font-size: 32px; font-weight: 700; letter-spacing: 4px; color: var(--warm-core); margin-bottom: 6px; text-transform: uppercase; }
+  .win-sub { font-size: 11px; letter-spacing: 4px; color: var(--warm-dim); margin-bottom: 36px; }
+  .win-score-row {
+    display: flex; gap: 40px; align-items: center; margin-bottom: 44px;
+  }
+  .win-score-item { text-align: center; }
+  .win-score-num { font-size: 48px; font-weight: 700; color: var(--warm-core); line-height: 1; }
+  .win-score-lbl { font-size: 11px; color: var(--warm-dim); letter-spacing: 2px; margin-top: 4px; }
+  .win-score-sep { font-size: 24px; color: #333; }
+
+  .name-input-wrap {
+    width: 100%; margin-bottom: 16px;
+    background: rgba(255,245,210,0.04);
+    border: 1px solid var(--btn-border);
+    border-radius: 12px; padding: 14px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .name-input-text { font-size: 15px; color: var(--warm-core); letter-spacing: 0.5px; }
+  .name-input-hint { font-size: 12px; color: var(--warm-dim); }
+
+  .win-buttons { width: 100%; display: flex; flex-direction: column; gap: 10px; }
+  .btn-save {
+    width: 100%; height: 52px;
+    background: transparent;
+    border: 1px solid var(--btn-border);
+    border-radius: 14px;
+    font-size: 14px; font-weight: 600; color: var(--warm-core); letter-spacing: 2px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-secondary-row { display: flex; gap: 10px; }
+  .btn-secondary {
+    flex: 1; height: 48px;
+    background: transparent;
+    border: 1px solid rgba(255,245,210,0.25);
+    border-radius: 12px;
+    font-size: 13px; color: var(--warm-mid);
+    display: flex; align-items: center; justify-content: center;
+  }
+
+
+  /* ════════════════════════════════
+     SCREEN 7 — LOSS
+  ════════════════════════════════ */
+  .s-loss {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .loss-overlay {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    padding: 0 28px 52px;
+  }
+  .loss-title { font-size: 26px; font-weight: 600; letter-spacing: 4px; color: rgba(255,245,210,0.60); margin-bottom: 6px; text-transform: uppercase; }
+
+
+  /* ════════════════════════════════
+     SCREEN 8 — DRAW
+  ════════════════════════════════ */
+  .s-draw {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .draw-title { font-size: 28px; font-weight: 600; letter-spacing: 4px; color: rgba(255,245,210,0.75); margin-bottom: 6px; text-transform: uppercase; }
+
+
+  /* ════════════════════════════════
+     SCREEN 9 — SKY
+  ════════════════════════════════ */
+  .s-sky {
+    background: #060612;
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .sky-ui {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 60px 20px 40px;
+    pointer-events: none;
+  }
+  .sky-top-row { display: flex; align-items: center; gap: 12px; }
+  .sky-back-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: rgba(16,15,13,0.7);
+    border: 1px solid var(--panel-border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--warm-mid); font-size: 16px;
+  }
+  .sky-title {
+    flex: 1; font-size: 12px; letter-spacing: 4px;
+    color: var(--warm-mid); text-transform: uppercase;
+  }
+  .sky-mode-toggle {
+    height: 32px; padding: 0 14px;
+    background: rgba(16,15,13,0.7);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    font-size: 11px; color: var(--warm-mid); letter-spacing: 1px;
+    display: flex; align-items: center;
+  }
+  .sky-bottom-row { display: flex; justify-content: space-between; align-items: flex-end; }
+  .sky-find-btn {
+    height: 40px; padding: 0 16px;
+    background: rgba(16,15,13,0.8);
+    border: 1px solid var(--btn-border);
+    border-radius: 10px;
+    font-size: 12px; color: var(--warm-core); letter-spacing: 1px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sky-nav-row { display: flex; align-items: center; gap: 8px; }
+  .sky-nav-btn {
+    width: 36px; height: 36px;
+    background: rgba(16,15,13,0.8);
+    border: 1px solid rgba(255,245,210,0.25);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--warm-mid); font-size: 16px;
+  }
+  .sky-counter { font-size: 11px; color: var(--warm-dim); }
+  .sky-zoom-col { display: flex; flex-direction: column; gap: 8px; }
+  .sky-zoom-btn {
+    width: 36px; height: 36px;
+    background: rgba(16,15,13,0.8);
+    border: 1px solid rgba(255,245,210,0.25);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--warm-mid); font-size: 18px;
+  }
+
+
+  /* ════════════════════════════════
+     SCREEN 10 — SAVE ANIMATION
+  ════════════════════════════════ */
+  .s-save-anim {
+    background: var(--bg-dark);
+    width: 100%; height: 100%;
+    position: relative; overflow: hidden;
+  }
+  .save-label {
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; z-index: 20;
+  }
+  .save-star-glow {
+    position: absolute;
+    top: 35%; left: 55%;
+    transform: translate(-50%, -50%);
+    z-index: 15;
+  }
+  .save-text {
+    position: absolute;
+    top: calc(35% + 68px); left: 0; right: 0;
+    text-align: center;
+    font-size: 14px; letter-spacing: 3px;
+    color: rgba(255,245,210,0.92);
+    z-index: 20;
+    font-weight: 500;
+  }
+  .constellation-ghost {
+    position: absolute;
+    top: 18%; left: 50%; transform: translateX(-50%);
+    opacity: 0.55; z-index: 12;
+  }
+
+
+  /* ── Shared mini constellation SVG ── */
+  .mini-constellation { display: block; }
+</style>
+</head>
+<body>
+
+<div class="canvas-title">STARGAZER · ALL SCREENS · 390 × 844 · html.to.design</div>
+
+<div class="screens-grid">
+
+
+  <!-- ══════════════════════════════════
+       1. AUTH SCREEN
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">01</span>Auth / Onboarding</div>
+    <div class="iphone">
+      <div class="status-bar">
+        <span class="status-time">9:41</span>
+        <div class="status-icons">
+          <svg viewBox="0 0 17 12"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/><rect x="14" y="1" width="3" height="10" rx="1" opacity=".3"/></svg>
+          <svg viewBox="0 0 16 12"><path d="M8 2.4C5.5 2.4 3.3 3.4 1.7 5L0 3.3C2.1 1.2 4.9 0 8 0s5.9 1.2 8 3.3L14.3 5C12.7 3.4 10.5 2.4 8 2.4z"/><path d="M8 5.8c-1.5 0-2.9.6-3.9 1.6L2.4 5.7C3.8 4.3 5.8 3.4 8 3.4s4.2.9 5.6 2.3l-1.7 1.7C10.9 6.4 9.5 5.8 8 5.8z"/><circle cx="8" cy="10" r="2"/></svg>
+          <svg viewBox="0 0 25 12"><rect x="0" y="1" width="22" height="10" rx="3" stroke="white" stroke-width="1" fill="none" opacity=".4"/><rect x="23" y="3.5" width="2" height="5" rx="1" fill="white" opacity=".4"/><rect x="1.5" y="2.5" width="16" height="7" rx="2" fill="white"/></svg>
+        </div>
+      </div>
+      <div class="s-auth">
+        <!-- bg micro stars -->
+        <div class="bg-stars" id="auth-stars"></div>
+        <!-- star icon -->
+        <div class="auth-logo">The game</div>
+        <div class="auth-title">STARGAZER</div>
+        <div class="auth-subtitle">CONSTELLATION GAME</div>
+        <!-- big star SVG -->
+        <div class="auth-star-icon" style="margin-top:8px;margin-bottom:40px;">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="22" fill="rgba(255,245,210,0.04)" stroke="rgba(255,245,210,0.2)" stroke-width="1"/>
+            <path d="M24 6 L26.5 18 L38 18 L28.8 25.5 L32 38 L24 31 L16 38 L19.2 25.5 L10 18 L21.5 18 Z" fill="rgba(255,245,210,0.15)" stroke="rgba(255,245,210,0.6)" stroke-width="1" stroke-linejoin="round"/>
+            <circle cx="24" cy="24" r="3" fill="rgba(255,245,210,0.9)"/>
+            <circle cx="24" cy="24" r="8" fill="rgba(255,245,210,0.06)"/>
+          </svg>
+        </div>
+
+        <div class="btn-apple">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14.2 9.5c0-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.7-3.2-1.7-1.3-.1-2.6.8-3.3.8-.7 0-1.8-.8-2.9-.7C5.1 4.8 3.7 5.7 3 7.1 1.5 10 2.6 14.4 4 16.7c.7 1.1 1.6 2.3 2.7 2.3 1.1-.1 1.5-.7 2.8-.7 1.3 0 1.7.7 2.8.7 1.2 0 1.9-1.1 2.6-2.2.8-1.3 1.2-2.5 1.2-2.6-.1 0-2.9-1.1-2.9-4.7z" fill="#000"/><path d="M11.9 3.2c.6-.7 1-1.7.9-2.7-.9.1-2 .6-2.6 1.3-.6.6-1.1 1.6-.9 2.6 1 .1 2-.5 2.6-1.2z" fill="#000"/></svg>
+          Войти через Apple
+        </div>
+        <div class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M16.9 9.2c0-.6-.1-1.2-.2-1.7H9v3.2h4.4c-.2 1-.8 1.9-1.6 2.4v2h2.6c1.5-1.4 2.5-3.5 2.5-5.9z" fill="rgba(255,245,210,0.7)"/><path d="M9 17c2.2 0 4-.7 5.4-2l-2.6-2c-.7.5-1.7.8-2.8.8-2.1 0-3.9-1.4-4.6-3.4H1.8v2C3.2 15.3 6 17 9 17z" fill="rgba(255,245,210,0.6)"/><path d="M4.4 10.4A5 5 0 014.1 9c0-.5.1-.9.2-1.4v-2H1.8A8 8 0 001 9c0 1.3.3 2.5.8 3.5l2.6-2.1z" fill="rgba(255,245,210,0.5)"/><path d="M9 3.6c1.2 0 2.3.4 3.1 1.2L14.5 2.4C12.9.9 11.1 0 9 0 6 0 3.2 1.7 1.8 4.5l2.6 2c.7-2 2.5-3 4.6-3z" fill="rgba(255,245,210,0.8)"/></svg>
+          Войти через Google
+        </div>
+        <div class="btn-divider">— или —</div>
+        <div class="btn-skip">Продолжить без входа</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       2. HOME SCREEN
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">02</span>Home / Dashboard</div>
+    <div class="iphone">
+      <div class="status-bar"><span class="status-time">9:41</span><div class="status-icons"><svg viewBox="0 0 17 12" fill="white" opacity=".8"><rect x="0" y="3" width="3" height="9" rx="1"/><rect x="4.5" y="2" width="3" height="10" rx="1"/><rect x="9" y="0" width="3" height="12" rx="1"/></svg></div></div>
+      <div class="s-home">
+        <!-- bg stars -->
+        <svg class="home-bg-stars" viewBox="0 0 390 844" style="position:absolute;inset:0;width:100%;height:100%;">
+          <circle cx="45" cy="120" r="1" fill="rgba(255,245,210,0.25)"/>
+          <circle cx="320" cy="80" r="1.5" fill="rgba(255,245,210,0.3)"/>
+          <circle cx="200" cy="200" r="0.8" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="350" cy="300" r="1" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="80" cy="400" r="1.2" fill="rgba(255,245,210,0.15)"/>
+          <circle cx="290" cy="450" r="0.8" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="150" cy="600" r="1" fill="rgba(255,245,210,0.15)"/>
+          <circle cx="360" cy="650" r="1.5" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="55" cy="720" r="0.8" fill="rgba(255,245,210,0.15)"/>
+          <circle cx="230" cy="780" r="1" fill="rgba(255,245,210,0.1)"/>
+        </svg>
+
+        <div class="home-content">
+          <div class="home-profile">
+            <div class="avatar">✦</div>
+            <div>
+              <div class="profile-name">Masha</div>
+              <div class="profile-rank"><div class="rank-dot"></div> Звёздный охотник · IV</div>
+            </div>
+          </div>
+
+          <div class="home-section-label">Последние созвездия</div>
+          <div class="constellation-cards">
+            <div class="constellation-card">
+              <svg width="52" height="40" viewBox="0 0 52 40" class="mini-constellation">
+                <line x1="10" y1="30" x2="26" y2="10" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+                <line x1="26" y1="10" x2="42" y2="28" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+                <line x1="42" y1="28" x2="18" y2="22" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+                <circle cx="10" cy="30" r="2.5" fill="rgba(255,200,120,0.9)"/>
+                <circle cx="26" cy="10" r="2.5" fill="rgba(255,200,120,0.9)"/>
+                <circle cx="42" cy="28" r="2.5" fill="rgba(255,200,120,0.9)"/>
+                <circle cx="18" cy="22" r="2" fill="rgba(255,200,120,0.7)"/>
+              </svg>
+              <div class="card-name">Орион</div>
+            </div>
+            <div class="constellation-card">
+              <svg width="52" height="40" viewBox="0 0 52 40" class="mini-constellation">
+                <line x1="8" y1="8" x2="44" y2="32" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+                <line x1="44" y1="32" x2="26" y2="8" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+                <circle cx="8" cy="8" r="2.5" fill="rgba(255,200,120,0.9)"/>
+                <circle cx="44" cy="32" r="2.5" fill="rgba(255,200,120,0.9)"/>
+                <circle cx="26" cy="8" r="2" fill="rgba(255,200,120,0.9)"/>
+                <circle cx="20" cy="26" r="1.8" fill="rgba(255,200,120,0.6)"/>
+              </svg>
+              <div class="card-name">Лира</div>
+            </div>
+            <div class="constellation-card" style="border:1px dashed rgba(255,245,210,0.15);background:transparent;">
+              <div style="font-size:22px;color:rgba(255,245,210,0.2);">+</div>
+              <div class="card-name" style="color:rgba(255,245,210,0.2);">Новое</div>
+            </div>
+          </div>
+
+          <div class="btn-play">ИГРАТЬ</div>
+          <div class="home-nav-row">
+            <div class="btn-nav">✦ Моё небо</div>
+            <div class="btn-nav">✧ Общее небо</div>
+          </div>
+
+          <div class="home-stats">
+            <div class="stat-item"><div class="stat-val">24</div><div class="stat-lbl">Игр</div></div>
+            <div class="stat-item"><div class="stat-val">13</div><div class="stat-lbl">Побед</div></div>
+            <div class="stat-item"><div class="stat-val">7</div><div class="stat-lbl">Созвездий</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       3. GAME SETUP
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">03</span>Game Setup</div>
+    <div class="iphone">
+      <div class="status-bar"><span class="status-time">9:41</span></div>
+      <div class="s-setup">
+        <div class="back-btn-small">←</div>
+        <div style="height:20px"></div>
+        <div class="setup-title">Настройки игры</div>
+        <div class="setup-heading">Сколько звёзд?</div>
+
+        <div class="length-options">
+          <div class="length-btn"><span>Быстрая</span><span class="stars-count">4 звезды · ~3 мин</span></div>
+          <div class="length-btn active"><span>Средняя</span><span class="stars-count">6 звёзд · ~7 мин</span></div>
+          <div class="length-btn"><span>Длинная</span><span class="stars-count">8 звёзд · ~12 мин</span></div>
+          <div class="length-btn"><span>Марафон</span><span class="stars-count">10 звёзд · ~20 мин</span></div>
+        </div>
+
+        <div class="ai-toggle-row">
+          <span class="toggle-label">Играть против ИИ</span>
+          <div class="toggle"><div class="toggle-thumb"></div></div>
+        </div>
+
+        <div class="btn-play" style="width:100%;border-radius:14px;height:52px;margin-top:auto;">НАЧАТЬ ИГРУ</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       4. ACTIVE GAME (panels visible)
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">04</span>Active Game — Panels</div>
+    <div class="iphone">
+      <div class="s-game">
+        <!-- Top panel -->
+        <div class="game-top-panel">
+          <div class="player-cell">
+            <div class="p-name">Masha</div>
+            <div class="p-score">3</div>
+            <div class="p-sub">Звёздный охотник</div>
+          </div>
+          <div class="turn-badge">Ход Masha</div>
+          <div class="player-cell right">
+            <div class="p-name" style="text-align:right">Stargazer</div>
+            <div class="p-score" style="text-align:right">2</div>
+            <div class="p-sub" style="text-align:right">ИИ · IV</div>
+          </div>
+        </div>
+
+        <!-- Game canvas -->
+        <div class="game-canvas-area">
+          <svg class="game-canvas-svg" viewBox="0 0 390 844">
+            <rect width="390" height="844" fill="#060612"/>
+            <!-- Random bg stars -->
+            <circle cx="60" cy="150" r="0.8" fill="rgba(255,245,210,0.15)"/>
+            <circle cx="340" cy="200" r="1" fill="rgba(255,245,210,0.2)"/>
+            <circle cx="180" cy="300" r="0.8" fill="rgba(255,245,210,0.15)"/>
+            <circle cx="280" cy="500" r="1.2" fill="rgba(255,245,210,0.18)"/>
+            <circle cx="90" cy="600" r="0.8" fill="rgba(255,245,210,0.12)"/>
+            <circle cx="350" cy="650" r="1" fill="rgba(255,245,210,0.15)"/>
+            <circle cx="150" cy="720" r="0.8" fill="rgba(255,245,210,0.1)"/>
+            <!-- Game lines -->
+            <line x1="120" y1="280" x2="195" y2="380" stroke="rgba(255,245,210,0.6)" stroke-width="1.5"/>
+            <line x1="195" y1="380" x2="290" y2="310" stroke="rgba(255,245,210,0.6)" stroke-width="1.5"/>
+            <!-- Polygon fill -->
+            <polygon points="120,280 195,380 290,310" fill="rgba(255,245,210,0.06)"/>
+            <!-- Star points (player 1 captured) -->
+            <!-- glow -->
+            <circle cx="120" cy="280" r="12" fill="rgba(255,200,120,0.12)"/>
+            <circle cx="195" cy="380" r="12" fill="rgba(255,200,120,0.12)"/>
+            <circle cx="290" cy="310" r="12" fill="rgba(255,200,120,0.12)"/>
+            <!-- cores -->
+            <circle cx="120" cy="280" r="5" fill="rgba(255,245,210,0.95)"/>
+            <circle cx="195" cy="380" r="5" fill="rgba(255,245,210,0.95)"/>
+            <circle cx="290" cy="310" r="5" fill="rgba(255,245,210,0.95)"/>
+            <!-- free points -->
+            <circle cx="260" cy="480" r="10" fill="rgba(255,200,120,0.1)"/>
+            <circle cx="260" cy="480" r="4.5" fill="rgba(255,245,210,0.8)"/>
+            <circle cx="130" cy="460" r="10" fill="rgba(255,200,120,0.1)"/>
+            <circle cx="130" cy="460" r="4.5" fill="rgba(255,245,210,0.8)"/>
+            <circle cx="200" cy="540" r="10" fill="rgba(255,200,120,0.1)"/>
+            <circle cx="200" cy="540" r="4.5" fill="rgba(255,245,210,0.8)"/>
+            <!-- preview line (hover) -->
+            <line x1="290" y1="310" x2="260" y2="480" stroke="rgba(255,245,210,0.3)" stroke-width="1" stroke-dasharray="4,4"/>
+          </svg>
+        </div>
+
+        <!-- Bottom panel -->
+        <div class="game-bottom-panel">
+          <div class="bottom-btn">← Последний ход</div>
+          <div style="display:flex;gap:8px;">
+            <div class="hint-btn">💡</div>
+            <div class="hint-btn">···</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       5. GAME — MINIMAL UI
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">05</span>Active Game — Minimal</div>
+    <div class="iphone">
+      <div class="s-game-min">
+        <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 390 844">
+          <rect width="390" height="844" fill="#060612"/>
+          <circle cx="60" cy="150" r="0.8" fill="rgba(255,245,210,0.15)"/>
+          <circle cx="340" cy="200" r="1" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="180" cy="300" r="0.8" fill="rgba(255,245,210,0.12)"/>
+          <circle cx="280" cy="500" r="1.2" fill="rgba(255,245,210,0.18)"/>
+          <circle cx="90" cy="600" r="0.8" fill="rgba(255,245,210,0.1)"/>
+          <circle cx="350" cy="650" r="1" fill="rgba(255,245,210,0.15)"/>
+          <!-- lines -->
+          <line x1="120" y1="280" x2="195" y2="380" stroke="rgba(255,245,210,0.6)" stroke-width="1.5"/>
+          <line x1="195" y1="380" x2="290" y2="310" stroke="rgba(255,245,210,0.6)" stroke-width="1.5"/>
+          <polygon points="120,280 195,380 290,310" fill="rgba(255,245,210,0.06)"/>
+          <circle cx="120" cy="280" r="12" fill="rgba(255,200,120,0.10)"/>
+          <circle cx="120" cy="280" r="5" fill="rgba(255,245,210,0.95)"/>
+          <circle cx="195" cy="380" r="12" fill="rgba(255,200,120,0.10)"/>
+          <circle cx="195" cy="380" r="5" fill="rgba(255,245,210,0.95)"/>
+          <circle cx="290" cy="310" r="12" fill="rgba(255,200,120,0.10)"/>
+          <circle cx="290" cy="310" r="5" fill="rgba(255,245,210,0.95)"/>
+          <circle cx="260" cy="480" r="10" fill="rgba(255,200,120,0.08)"/>
+          <circle cx="260" cy="480" r="4.5" fill="rgba(255,245,210,0.75)"/>
+          <circle cx="130" cy="460" r="10" fill="rgba(255,200,120,0.08)"/>
+          <circle cx="130" cy="460" r="4.5" fill="rgba(255,245,210,0.75)"/>
+          <circle cx="200" cy="540" r="10" fill="rgba(255,200,120,0.08)"/>
+          <circle cx="200" cy="540" r="4.5" fill="rgba(255,245,210,0.75)"/>
+          <!-- toggle btn -->
+          <rect x="340" y="790" width="36" height="36" rx="18" fill="rgba(0,0,0,0.3)" stroke="rgba(255,245,210,0.14)" stroke-width="1"/>
+          <text x="358" y="811" text-anchor="middle" fill="rgba(255,245,210,0.5)" font-size="10" font-family="sans-serif">···</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       6. WIN + SAVE CONSTELLATION
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">06</span>Victory + Save</div>
+    <div class="iphone">
+      <div class="s-win">
+        <!-- bg: final constellation -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.35" viewBox="0 0 390 844">
+          <rect width="390" height="844" fill="#060612"/>
+          <line x1="100" y1="200" x2="200" y2="140" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="200" y1="140" x2="300" y2="220" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="300" y1="220" x2="260" y2="320" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="260" y1="320" x2="150" y2="300" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="150" y1="300" x2="100" y2="200" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <polygon points="100,200 200,140 300,220 260,320 150,300" fill="rgba(255,200,120,0.08)"/>
+          <circle cx="100" cy="200" r="14" fill="rgba(255,200,120,0.15)"/><circle cx="100" cy="200" r="5" fill="rgba(255,245,210,0.9)"/>
+          <circle cx="200" cy="140" r="14" fill="rgba(255,200,120,0.15)"/><circle cx="200" cy="140" r="5" fill="rgba(255,245,210,0.9)"/>
+          <circle cx="300" cy="220" r="14" fill="rgba(255,200,120,0.15)"/><circle cx="300" cy="220" r="5" fill="rgba(255,245,210,0.9)"/>
+          <circle cx="260" cy="320" r="14" fill="rgba(255,200,120,0.15)"/><circle cx="260" cy="320" r="5" fill="rgba(255,245,210,0.9)"/>
+          <circle cx="150" cy="300" r="14" fill="rgba(255,200,120,0.15)"/><circle cx="150" cy="300" r="5" fill="rgba(255,245,210,0.9)"/>
+        </svg>
+        <!-- gradient overlay -->
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, #060612 55%, transparent 100%);z-index:3;"></div>
+
+        <div class="win-overlay">
+          <div class="win-title">Победа</div>
+          <div class="win-sub">СОЗВЕЗДИЕ ЗАВЕРШЕНО</div>
+          <div class="win-score-row">
+            <div class="win-score-item"><div class="win-score-num">5</div><div class="win-score-lbl">Masha</div></div>
+            <div class="win-score-sep">:</div>
+            <div class="win-score-item"><div class="win-score-num" style="opacity:0.45">3</div><div class="win-score-lbl">Stargazer</div></div>
+          </div>
+
+          <div class="name-input-wrap">
+            <span class="name-input-text">Орион ✦</span>
+            <span class="name-input-hint">Название</span>
+          </div>
+
+          <div class="win-buttons">
+            <div class="btn-save">✦ СОХРАНИТЬ В НЕБО</div>
+            <div class="btn-secondary-row">
+              <div class="btn-secondary">Ещё раз</div>
+              <div class="btn-secondary">← Меню</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       7. LOSS
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">07</span>Defeat</div>
+    <div class="iphone">
+      <div class="s-loss">
+        <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.2" viewBox="0 0 390 844">
+          <rect width="390" height="844" fill="#060612"/>
+          <line x1="120" y1="220" x2="270" y2="190" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="270" y1="190" x2="300" y2="310" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="300" y1="310" x2="160" y2="330" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <circle cx="120" cy="220" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="270" cy="190" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="300" cy="310" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="160" cy="330" r="5" fill="rgba(255,245,210,0.7)"/>
+        </svg>
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, #060612 55%, transparent 100%);z-index:3;"></div>
+
+        <div class="loss-overlay">
+          <div class="loss-title">Поражение</div>
+          <div class="win-sub" style="margin-bottom:36px;">НЕ В ЭТОТ РАЗ</div>
+          <div class="win-score-row">
+            <div class="win-score-item"><div class="win-score-num" style="opacity:0.45">2</div><div class="win-score-lbl">Masha</div></div>
+            <div class="win-score-sep">:</div>
+            <div class="win-score-item"><div class="win-score-num">5</div><div class="win-score-lbl">Stargazer</div></div>
+          </div>
+          <div class="win-buttons">
+            <div class="btn-secondary-row">
+              <div class="btn-save" style="flex:1;height:52px;border-radius:14px;">Ещё раз</div>
+            </div>
+            <div class="btn-secondary-row">
+              <div class="btn-secondary">← В меню</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       8. DRAW
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">08</span>Draw + Save</div>
+    <div class="iphone">
+      <div class="s-draw">
+        <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.28" viewBox="0 0 390 844">
+          <rect width="390" height="844" fill="#060612"/>
+          <line x1="100" y1="250" x2="220" y2="180" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="220" y1="180" x2="310" y2="260" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="310" y1="260" x2="240" y2="340" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <line x1="240" y1="340" x2="130" y2="310" stroke="rgba(255,245,210,0.7)" stroke-width="1.5"/>
+          <polygon points="100,250 220,180 310,260 240,340 130,310" fill="rgba(255,245,210,0.04)"/>
+          <circle cx="100" cy="250" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="220" cy="180" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="310" cy="260" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="240" cy="340" r="5" fill="rgba(255,245,210,0.7)"/>
+          <circle cx="130" cy="310" r="5" fill="rgba(255,245,210,0.7)"/>
+        </svg>
+        <div style="position:absolute;inset:0;background:linear-gradient(to top, #060612 55%, transparent 100%);z-index:3;"></div>
+
+        <div class="win-overlay">
+          <div class="draw-title">Ничья</div>
+          <div class="win-sub" style="margin-bottom:36px;">РАВНЫЙ БОЙ</div>
+          <div class="win-score-row">
+            <div class="win-score-item"><div class="win-score-num">4</div><div class="win-score-lbl">Masha</div></div>
+            <div class="win-score-sep">:</div>
+            <div class="win-score-item"><div class="win-score-num">4</div><div class="win-score-lbl">Stargazer</div></div>
+          </div>
+
+          <div class="name-input-wrap">
+            <span class="name-input-text">Лебедь ✦</span>
+            <span class="name-input-hint">Название</span>
+          </div>
+
+          <div class="win-buttons">
+            <div class="btn-save">✦ СОХРАНИТЬ В НЕБО</div>
+            <div class="btn-secondary-row">
+              <div class="btn-secondary">Ещё раз</div>
+              <div class="btn-secondary">← Меню</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       9. SKY SCREEN
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">09</span>Sky Map</div>
+    <div class="iphone">
+      <div class="s-sky">
+        <!-- Starfield SVG -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 390 844">
+          <rect width="390" height="844" fill="#060612"/>
+          <!-- Random bg dots -->
+          <circle cx="34" cy="95" r="0.7" fill="rgba(255,252,245,0.2)"/>
+          <circle cx="87" cy="180" r="1" fill="rgba(255,245,220,0.25)"/>
+          <circle cx="143" cy="78" r="0.6" fill="rgba(255,252,245,0.18)"/>
+          <circle cx="201" cy="140" r="0.8" fill="rgba(255,248,235,0.22)"/>
+          <circle cx="267" cy="55" r="1.1" fill="rgba(255,245,210,0.28)"/>
+          <circle cx="312" cy="160" r="0.7" fill="rgba(255,252,245,0.2)"/>
+          <circle cx="355" cy="90" r="0.9" fill="rgba(255,248,235,0.24)"/>
+          <circle cx="58" cy="260" r="1.2" fill="rgba(255,245,220,0.22)"/>
+          <circle cx="118" cy="320" r="0.6" fill="rgba(255,252,245,0.17)"/>
+          <circle cx="172" cy="250" r="0.8" fill="rgba(255,248,235,0.2)"/>
+          <circle cx="235" cy="290" r="1" fill="rgba(255,245,210,0.25)"/>
+          <circle cx="290" cy="230" r="0.7" fill="rgba(255,252,245,0.18)"/>
+          <circle cx="345" cy="310" r="1.3" fill="rgba(255,245,220,0.3)"/>
+          <circle cx="40" cy="410" r="0.8" fill="rgba(255,248,235,0.2)"/>
+          <circle cx="95" cy="450" r="0.6" fill="rgba(255,252,245,0.15)"/>
+          <circle cx="160" cy="390" r="1" fill="rgba(255,245,210,0.22)"/>
+          <circle cx="225" cy="430" r="0.8" fill="rgba(255,248,235,0.2)"/>
+          <circle cx="280" cy="380" r="1.1" fill="rgba(255,245,220,0.25)"/>
+          <circle cx="330" cy="440" r="0.7" fill="rgba(255,252,245,0.18)"/>
+          <circle cx="70" cy="530" r="0.9" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="130" cy="580" r="1.2" fill="rgba(255,248,235,0.25)"/>
+          <circle cx="200" cy="520" r="0.6" fill="rgba(255,252,245,0.17)"/>
+          <circle cx="260" cy="570" r="0.8" fill="rgba(255,245,220,0.2)"/>
+          <circle cx="320" cy="530" r="1" fill="rgba(255,245,210,0.22)"/>
+          <circle cx="50" cy="660" r="0.7" fill="rgba(255,252,245,0.17)"/>
+          <circle cx="110" cy="700" r="1.1" fill="rgba(255,248,235,0.22)"/>
+          <circle cx="175" cy="640" r="0.8" fill="rgba(255,245,220,0.2)"/>
+          <circle cx="240" cy="690" r="0.6" fill="rgba(255,252,245,0.15)"/>
+          <circle cx="305" cy="650" r="1" fill="rgba(255,245,210,0.22)"/>
+          <circle cx="360" cy="710" r="0.9" fill="rgba(255,248,235,0.2)"/>
+
+          <!-- Constellation nebula dots (user constellations) -->
+          <!-- dot 1: mine - highlighted -->
+          <circle cx="195" cy="320" r="22" fill="rgba(255,248,235,0.06)"/>
+          <circle cx="195" cy="320" r="10" fill="rgba(255,248,235,0.14)"/>
+          <circle cx="195" cy="320" r="4" fill="rgba(255,250,240,1.0)"/>
+
+          <!-- dot 2: mine -->
+          <circle cx="290" cy="400" r="18" fill="rgba(255,248,235,0.05)"/>
+          <circle cx="290" cy="400" r="8" fill="rgba(255,248,235,0.12)"/>
+          <circle cx="290" cy="400" r="3.5" fill="rgba(255,250,240,1.0)"/>
+
+          <!-- dot 3: mine -->
+          <circle cx="110" cy="480" r="16" fill="rgba(255,248,235,0.05)"/>
+          <circle cx="110" cy="480" r="7" fill="rgba(255,248,235,0.10)"/>
+          <circle cx="110" cy="480" r="3" fill="rgba(255,250,240,0.95)"/>
+
+          <!-- dot 4: other users -->
+          <circle cx="330" cy="280" r="14" fill="rgba(200,200,220,0.05)"/>
+          <circle cx="330" cy="280" r="6" fill="rgba(200,200,220,0.12)"/>
+          <circle cx="330" cy="280" r="2.5" fill="rgba(255,255,255,0.75)"/>
+
+          <circle cx="155" cy="600" r="14" fill="rgba(200,200,220,0.04)"/>
+          <circle cx="155" cy="600" r="6" fill="rgba(200,200,220,0.10)"/>
+          <circle cx="155" cy="600" r="2.5" fill="rgba(255,255,255,0.70)"/>
+
+          <circle cx="60" cy="360" r="12" fill="rgba(200,200,220,0.04)"/>
+          <circle cx="60" cy="360" r="5" fill="rgba(200,200,220,0.09)"/>
+          <circle cx="60" cy="360" r="2" fill="rgba(255,255,255,0.65)"/>
+
+          <circle cx="340" cy="560" r="10" fill="rgba(200,200,220,0.04)"/>
+          <circle cx="340" cy="560" r="4" fill="rgba(200,200,220,0.08)"/>
+          <circle cx="340" cy="560" r="2" fill="rgba(255,255,255,0.60)"/>
+        </svg>
+
+        <!-- Sky UI overlay -->
+        <div class="sky-ui">
+          <div>
+            <div style="height:10px;"></div>
+            <div class="sky-top-row">
+              <div class="sky-back-btn">←</div>
+              <div class="sky-title">Общее небо</div>
+              <div class="sky-mode-toggle">Личное</div>
+            </div>
+          </div>
+          <div class="sky-bottom-row">
+            <div>
+              <div class="sky-find-btn">✦ Найти моё</div>
+              <div style="height:8px;"></div>
+              <div class="sky-nav-row">
+                <div class="sky-nav-btn">‹</div>
+                <div class="sky-counter">1 / 3</div>
+                <div class="sky-nav-btn">›</div>
+              </div>
+            </div>
+            <div class="sky-zoom-col">
+              <div class="sky-zoom-btn">+</div>
+              <div class="sky-zoom-btn">−</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       10. SAVE ANIMATION
+  ══════════════════════════════════ -->
+  <div class="frame-wrap">
+    <div class="frame-label"><span class="frame-num">10</span>Save Animation</div>
+    <div class="iphone">
+      <div class="s-save-anim">
+        <!-- Sky backdrop -->
+        <svg style="position:absolute;inset:0;width:100%;height:100%;" viewBox="0 0 390 844">
+          <rect width="390" height="844" fill="#060612"/>
+          <circle cx="34" cy="95" r="0.7" fill="rgba(255,252,245,0.2)"/>
+          <circle cx="87" cy="180" r="1" fill="rgba(255,245,220,0.25)"/>
+          <circle cx="267" cy="55" r="1.1" fill="rgba(255,245,210,0.28)"/>
+          <circle cx="312" cy="160" r="0.7" fill="rgba(255,252,245,0.2)"/>
+          <circle cx="355" cy="90" r="0.9" fill="rgba(255,248,235,0.24)"/>
+          <circle cx="118" cy="320" r="0.6" fill="rgba(255,252,245,0.17)"/>
+          <circle cx="235" cy="290" r="1" fill="rgba(255,245,210,0.25)"/>
+          <circle cx="345" cy="310" r="1.3" fill="rgba(255,245,220,0.3)"/>
+          <circle cx="95" cy="450" r="0.6" fill="rgba(255,252,245,0.15)"/>
+          <circle cx="280" cy="380" r="1.1" fill="rgba(255,245,220,0.25)"/>
+          <circle cx="70" cy="530" r="0.9" fill="rgba(255,245,210,0.2)"/>
+          <circle cx="320" cy="530" r="1" fill="rgba(255,245,210,0.22)"/>
+          <circle cx="175" cy="640" r="0.8" fill="rgba(255,245,220,0.2)"/>
+          <circle cx="305" cy="650" r="1" fill="rgba(255,245,210,0.22)"/>
+
+          <!-- Constellation ghost at top (shrinking) -->
+          <g opacity="0.50">
+            <line x1="145" y1="160" x2="200" y2="120" stroke="rgba(255,245,210,0.8)" stroke-width="1.2"/>
+            <line x1="200" y1="120" x2="255" y2="158" stroke="rgba(255,245,210,0.8)" stroke-width="1.2"/>
+            <line x1="255" y1="158" x2="238" y2="210" stroke="rgba(255,245,210,0.8)" stroke-width="1.2"/>
+            <line x1="238" y1="210" x2="165" y2="195" stroke="rgba(255,245,210,0.8)" stroke-width="1.2"/>
+            <line x1="165" y1="195" x2="145" y2="160" stroke="rgba(255,245,210,0.8)" stroke-width="1.2"/>
+            <circle cx="145" cy="160" r="3.5" fill="rgba(255,245,210,0.9)"/>
+            <circle cx="200" cy="120" r="3.5" fill="rgba(255,245,210,0.9)"/>
+            <circle cx="255" cy="158" r="3.5" fill="rgba(255,245,210,0.9)"/>
+            <circle cx="238" cy="210" r="3.5" fill="rgba(255,245,210,0.9)"/>
+            <circle cx="165" cy="195" r="3.5" fill="rgba(255,245,210,0.9)"/>
+          </g>
+
+          <!-- Landing star point with glow -->
+          <circle cx="220" cy="380" r="40" fill="rgba(255,248,235,0.04)"/>
+          <circle cx="220" cy="380" r="22" fill="rgba(255,248,235,0.07)"/>
+          <circle cx="220" cy="380" r="12" fill="rgba(255,248,235,0.12)"/>
+          <circle cx="220" cy="380" r="5" fill="rgba(255,250,240,1.0)"/>
+          <!-- sparkle rays -->
+          <line x1="220" y1="366" x2="220" y2="358" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+          <line x1="220" y1="394" x2="220" y2="402" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+          <line x1="206" y1="380" x2="198" y2="380" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+          <line x1="234" y1="380" x2="242" y2="380" stroke="rgba(255,245,210,0.5)" stroke-width="1"/>
+          <line x1="210" y1="370" x2="204" y2="364" stroke="rgba(255,245,210,0.3)" stroke-width="0.8"/>
+          <line x1="230" y1="370" x2="236" y2="364" stroke="rgba(255,245,210,0.3)" stroke-width="0.8"/>
+          <line x1="210" y1="390" x2="204" y2="396" stroke="rgba(255,245,210,0.3)" stroke-width="0.8"/>
+          <line x1="230" y1="390" x2="236" y2="396" stroke="rgba(255,245,210,0.3)" stroke-width="0.8"/>
+        </svg>
+
+        <!-- "Saved" text -->
+        <div style="position:absolute;top:calc(380px + 50px);left:0;right:0;text-align:center;z-index:20;">
+          <div style="font-size:13px;letter-spacing:3px;color:rgba(255,245,210,0.92);font-weight:500;font-family:'Raleway',sans-serif;">
+            Созвездие сохранено ✦
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</div><!-- /screens-grid -->
+
+<script>
+  // Add micro bg stars to auth screen
+  const authStars = document.getElementById('auth-stars');
+  const positions = [
+    [30,60,1,0.25],[80,140,0.7,0.2],[200,40,1.2,0.3],[310,90,0.8,0.22],
+    [350,180,1,0.2],[140,220,0.7,0.18],[60,300,1,0.15],[300,260,0.8,0.2],
+    [170,350,0.6,0.15],[340,400,1,0.18],[50,450,0.8,0.15],[260,480,0.7,0.2],
+    [120,520,1.2,0.2],[370,540,0.8,0.15],[90,620,0.7,0.12],[280,600,1,0.18],
+    [195,680,0.8,0.15],[360,700,0.6,0.12],[40,740,1,0.15],[240,760,0.8,0.12]
+  ];
+  positions.forEach(([x,y,r,a]) => {
+    const d = document.createElement('div');
+    d.className = 'star-dot';
+    d.style.cssText = `left:${x}px;top:${y}px;width:${r*2}px;height:${r*2}px;opacity:${a};`;
+    authStars.appendChild(d);
+  });
+</script>
+</body>
+</html>

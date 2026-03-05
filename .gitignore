@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Node
+node_modules/
+npm-debug.log*
+
+# iOS / Xcode
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.moved-aside
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+
+# Capacitor
+.capacitor/
+
+# Env / secrets
+.env
+.env.local
+.env.*
+
+# Build artifacts
+dist/
+build/

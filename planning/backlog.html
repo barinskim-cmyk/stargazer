@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stargazer — Бэклог</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a14;
+    color: #e0e0f0;
+    padding: 32px 24px 80px;
+    max-width: 860px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid #2a2a3a;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  header .subtitle { color: #666; font-size: 0.85rem; letter-spacing: 0.1em; }
+  .stars { font-size: 1.1rem; margin-bottom: 10px; opacity: 0.5; }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 32px;
+    background: #0e0e1e;
+    border: 1px solid #1e1e30;
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: #555;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: #16163a;
+    color: #c4b5fd;
+    box-shadow: 0 0 0 1px #3b2d8a inset;
+  }
+  .tab-btn .count {
+    display: inline-block;
+    margin-left: 7px;
+    background: #1e1e30;
+    color: #666;
+    font-size: 0.72rem;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    vertical-align: middle;
+  }
+  .tab-btn.active .count { background: #2d1f6a; color: #a78bfa; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Stats row ── */
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    flex: 1;
+    min-width: 120px;
+    background: #111120;
+    border: 1px solid #1e1e30;
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: center;
+  }
+  .stat-card .val { font-size: 1.8rem; font-weight: 700; color: #a78bfa; line-height: 1; }
+  .stat-card .lbl { font-size: 0.72rem; color: #555; letter-spacing: 0.08em; margin-top: 4px; text-transform: uppercase; }
+  .progress-bar { height: 4px; background: #1e1e30; border-radius: 2px; overflow: hidden; margin-top: 10px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #5b3fa0, #a78bfa); border-radius: 2px; transition: width 0.5s ease; }
+
+  /* ── Section / Group ── */
+  .section {
+    margin-bottom: 28px;
+    background: #111120;
+    border-radius: 12px;
+    border: 1px solid #1e1e30;
+    overflow: hidden;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #14142a;
+    border-bottom: 1px solid #1e1e30;
+  }
+  .section-icon {
+    font-size: 1.1rem;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .section-title { flex: 1; font-weight: 600; font-size: 0.95rem; color: #ddd; }
+  .section-meta { font-size: 0.75rem; color: #444; white-space: nowrap; }
+
+  /* ── Item rows ── */
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 18px;
+    border-bottom: 1px solid #191928;
+  }
+  .item:last-child { border-bottom: none; }
+
+  /* Done tab items */
+  .item-done .item-title {
+    flex: 1;
+    font-size: 0.88rem;
+    color: #666;
+    text-decoration: line-through;
+    text-decoration-color: #333;
+  }
+  .item-done .check {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: #2d1f6a;
+    border: 1.5px solid #5b3fa0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-size: 10px;
+    color: #a78bfa;
+    font-weight: 700;
+  }
+  .item-done .date {
+    font-size: 0.72rem;
+    color: #383848;
+    white-space: nowrap;
+    margin-top: 3px;
+    letter-spacing: 0.03em;
+  }
+
+  /* Backlog tab items */
+  .item-backlog .item-title {
+    flex: 1;
+    font-size: 0.88rem;
+    color: #bbb;
+  }
+  .item-backlog .dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid #2a2a40;
+    background: #0a0a14;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .item-note {
+    font-size: 0.75rem;
+    color: #444;
+    padding: 4px 0 8px 48px;
+    font-style: italic;
+    border-bottom: 1px solid #191928;
+    line-height: 1.5;
+  }
+  .item-note:last-child { border-bottom: none; }
+
+  /* Tags */
+  .tag {
+    font-size: 0.65rem;
+    padding: 2px 7px;
+    border-radius: 8px;
+    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .tag-code    { background: #0e1e2e; color: #7dd3fc; }
+  .tag-design  { background: #1e0e2e; color: #c4b5fd; }
+  .tag-back    { background: #0e1e0e; color: #86efac; }
+  .tag-store   { background: #2e1e0e; color: #fdba74; }
+  .tag-manual  { background: #1e0e0e; color: #fca5a5; }
+  .tag-arch    { background: #0e1e2e; color: #67e8f9; }
+  .tag-ui      { background: #1e1e0e; color: #fde68a; }
+
+  /* Priority badge */
+  .prio {
+    font-size: 0.62rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    white-space: nowrap;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+  .prio-high   { background: #3a0e0e; color: #f87171; }
+  .prio-mid    { background: #2a1e0a; color: #fb923c; }
+  .prio-low    { background: #0e1a0e; color: #4ade80; }
+  .prio-idea   { background: #1a1a2e; color: #818cf8; }
+
+  /* Divider label */
+  .group-label {
+    font-size: 0.68rem;
+    color: #333;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 10px 18px 6px;
+    border-bottom: 1px solid #191928;
+    background: #0d0d1c;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="stars">✦ ✧ ✦</div>
+  <h1>STARGAZER</h1>
+  <div class="subtitle">БЭКЛОГ И ИСТОРИЯ</div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('backlog')">
+    В работе / Бэклог <span class="count" id="cnt-backlog">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('done')">
+    Сделано <span class="count" id="cnt-done">0</span>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TAB: БЭКЛОГ
+══════════════════════════════════════════ -->
+<div class="tab-panel active" id="panel-backlog">
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val" id="bl-high">0</div>
+      <div class="lbl">Высокий приоритет</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="bl-mid">0</div>
+      <div class="lbl">Средний</div>
+    </div>
+    <div class="stat-card">
+      <div class="val" id="bl-idea">0</div>
+      <div class="lbl">Идеи / архитектура</div>
+    </div>
+  </div>
+
+  <!-- Auth & Monetization -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🔐</div>
+      <div class="section-title">Авторизация и монетизация</div>
+      <div class="section-meta">не блокирует игру, но нужно до релиза</div>
+    </div>
+
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Supabase Auth — настроить Apple Sign In и Google провайдеры</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Подключить реальный Apple Sign In (сейчас — заглушка «Скоро ✦»)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">In-App Purchase — @capacitor-community/in-app-purchases или RevenueCat</div>
+      <span class="tag tag-store">App Store</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Создать consumable продукт в App Store Connect (~0.99$)</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Запись созвездия в Supabase только после успешной оплаты</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Supabase RLS — настроить Row Level Security на таблице constellations</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item-note">Добавить user_id UUID колонку в Supabase, создать RLS политику: INSERT/SELECT только для auth.uid() = user_id. Без этого любой может читать и писать.</div>
+  </div>
+
+  <!-- Небо: архитектура — ВЫПОЛНЕНО (требуется ручная миграция SQL) -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🌌</div>
+      <div class="section-title">Архитектура неба на 5М+ созвездий</div>
+      <div class="section-meta">✓ реализовано — нужна SQL-миграция в Supabase</div>
+    </div>
+
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">⚠️ SQL-миграция Supabase (требует ручного запуска в Dashboard)</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item-note">ALTER TABLE constellations ADD COLUMN IF NOT EXISTS gx FLOAT DEFAULT random(), ADD COLUMN IF NOT EXISTS gy FLOAT DEFAULT random(); CREATE INDEX IF NOT EXISTS idx_constellations_pos ON constellations (gx, gy);</div>
+  </div>
+
+  <!-- Polish -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">✨</div>
+      <div class="section-title">Полировка UI</div>
+      <div class="section-meta">до TestFlight</div>
+    </div>
+
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Safe area отступы — все элементы в пределах скруглений экрана iPhone</div>
+      <span class="tag tag-code">Код</span>
+      <span class="prio prio-mid">MID</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Проверить анимацию сохранения на реальном устройстве — целевая точка на небе</div>
+      <span class="tag tag-ui">UI</span>
+      <span class="prio prio-mid">MID</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Звук при подмигивании звёздочек («найти мои»)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="prio prio-low">LOW</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Haptic feedback при сохранении созвездия</div>
+      <span class="tag tag-code">Код</span>
+      <span class="prio prio-low">LOW</span>
+    </div>
+  </div>
+
+  <!-- Release -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🚀</div>
+      <div class="section-title">Релиз</div>
+      <div class="section-meta">финальный этап</div>
+    </div>
+
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">App Icon — все размеры (1024×1024 + производные)</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Splash screen</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Privacy Policy — опубликовать страницу (можно GitHub Pages)</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">TestFlight — тест на реальном устройстве</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Скриншоты для App Store (6.7", 5.5")</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="prio prio-mid">MID</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Сабмит в App Store</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="prio prio-mid">MID</span>
+    </div>
+  </div>
+
+</div><!-- /panel-backlog -->
+
+
+<!-- ══════════════════════════════════════════
+     TAB: СДЕЛАНО
+══════════════════════════════════════════ -->
+<div class="tab-panel" id="panel-done">
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="val" id="done-total">0</div>
+      <div class="lbl">Задач выполнено</div>
+      <div class="progress-bar"><div class="progress-fill" id="done-bar" style="width:0%"></div></div>
+    </div>
+    <div class="stat-card">
+      <div class="val">Mar 2026</div>
+      <div class="lbl">Последнее обновление</div>
+    </div>
+  </div>
+
+  <!-- Январь 2026 — Ядро игры -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🎮</div>
+      <div class="section-title">Ядро игры и экраны</div>
+    </div>
+    <div class="group-label">Январь 2026</div>
+
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Интерактивное обучение — звёзды загораются, ведут через первую партию</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Флаг tutorialDone в localStorage — показывать только при первом запуске</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Система рангов — 10 рангов, медленная прогрессия</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Анимация появления точек в начале игры</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Плавная анимация соединения точек — линия «рисуется»</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Победный экран — вспышка, разлёт звёзд</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Переходы между экранами — fade</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Звуковые эффекты — соединение, победа</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Тактильный отклик (haptics) при соединении точек</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Ограничение размера canvas — max 430×932px</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">янв 2026</span>
+    </div>
+  </div>
+
+  <!-- Февраль 2026 — Главная и небо -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🏠</div>
+      <div class="section-title">Главная, профиль, небо</div>
+    </div>
+    <div class="group-label">Февраль 2026</div>
+
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Новый главный экран — профиль, ранг, статистика, превью созвездий</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Кнопки навигации — Играть, Мои созвездия, Общее небо</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Убрать поле ввода имени — имя берётся из профиля</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Экран "Общее небо" — зумируемый canvas, созвездия всех игроков</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Загрузка созвездий из Supabase с лимитом + realtime subscription</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Личное небо — отдельный режим с кнопкой переключения Общее ↔ Личное</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Сохранение созвездия — сериализация points/lines/polygons в JSON → Supabase</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Таблица constellations в Supabase + RLS + интеграция Supabase JS</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Регистрация и логин через email/пароль (Supabase Auth)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Состояние «гость» — можно играть без логина</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Кластеризация созвездий на небе: galaxy view ↔ map view по масштабу</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Виртуальный рендер — только созвездия в текущем viewport (culling)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Обновление «Последних созвездий» на главной после сохранения</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Скрытие UI во время игры — только canvas, кнопка ··· для панелей</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">фев 2026</span>
+    </div>
+  </div>
+
+  <!-- Март 2026 — Полировка -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🎨</div>
+      <div class="section-title">Полировка, визуал, UX-улучшения</div>
+    </div>
+    <div class="group-label">Март 2026</div>
+
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Молочно-белая цветовая схема — все синие/голубые заменены на янтарь/молоко</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">1 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Тёплые amber звёзды восстановлены (glowColor/coreColor)</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">1 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Нейтральный тёмный фон панелей вместо amber/rust</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">1 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Apple/Google кнопки — заглушка «Скоро ✦» (toast)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">1 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Supabase ошибка: «Сохранено локально ✦» vs «Созвездие сохранено ✦»</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">1 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Найти мои — цикл по всем своим созвездиям с кнопками ‹ ›</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">2 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Антинаслоение созвездий на небе — collision avoidance при построении позиций</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">2 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Фоновые звёзды на небе — 800 штук (700 мелких + 80 средних + 20 крупных)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">2 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Сохранение убрано из проигрыша, оставлено в ничьей</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">2 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Прозрачные кнопки — заливка убрана, контур и текст цвета ядра звезды</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Панели top/bottom — position:absolute поверх canvas, звёзды больше не уезжают</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Отступы генерации звёзд — раздельные TOP_M/BOT_M, не попадают под панели</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Новая анимация сохранения — небо накрывает, созвездие летит к точке, мигает, надпись</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">После «Созвездие сохранено» — авто-переход на главный экран</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Подсветка «Найти мои» — убран жёлтый, тёплый белый + звёздочки мигают по очереди</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Фоновые звёзды — Math.random() позиции (нет линейных артефактов хэша), простые точки</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">4 мар 2026</span>
+    </div>
+  </div>
+
+  <!-- Март 2026 — Sky Hub, userId, документация -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🗺️</div>
+      <div class="section-title">Навигация, архитектура, бэкенд</div>
+    </div>
+    <div class="group-label">Март 2026</div>
+
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Sky Hub — промежуточный хаб-экран между главной и подэкранами (Мои созвездия / Небо)</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Экран настроек — звук, вибрация, звёздное свечение, выбор темы</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Главный экран: кнопка длинны (короткая / обычная / длинная), sky tile, ИГРАТЬ в bottom</div>
+      <span class="tag tag-ui">UI</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Safe area double-counting исправлен на главном экране</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Исправлены 3 null-ref краша: _pbFill, lvlEl/starsEl, particle-canvas</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">userId привязан к INSERT/UPSERT в Supabase; «Моё небо» грузит с фильтром user_id</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Offline fallback — «Нет соединения ✦» с кнопкой «Повторить», таймаут 6с</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Документация обновлена: ARCHITECTURE.md, STATE.md, SCREENS.md, FUNCTIONS.md</div>
+      <span class="tag tag-arch">Архитектура</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+  </div>
+
+  <!-- Март 2026 — Архитектура неба 1М -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🌌</div>
+      <div class="section-title">Архитектура неба на 5М+ созвездий</div>
+    </div>
+    <div class="group-label">Март 2026</div>
+
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">_SKY_WORLD = 1 000 000; _SKY_CELL = 50 000; новые константы масштаба (_SKY_SMIN, _SKY_SMAX, _SKY_THRESH_DOT, _SKY_THRESH_FULL)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Процедурные фоновые звёзды: _skyGenCell(cx, cy) seeded RNG + LRU-кэш _skyBgCache (200 ячеек)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">3-уровневый LOD в _skyDraw: heatmap-точки → galaxy glow → полный рендер с именами</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">gx/gy в INSERT/UPSERT (3 точки); SELECT теперь включает gx, gy; _skyItemToPos использует server gx/gy</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Viewport bbox-запрос _skyBboxLoad() — debounce 150мс, WHERE gx/gy BETWEEN, LIMIT 300, merge без дублей</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Fly-to scale 0.02; openSkyScreen initial scale 0.0006; _constellationAddress margin 50 000</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+  </div>
+
+</div><!-- /panel-done -->
+
+<script>
+  function switchTab(id) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      b.classList.toggle('active', ['backlog','done'][i] === id);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === 'panel-' + id);
+    });
+  }
+
+  function updateCounts() {
+    const backlogItems = document.querySelectorAll('#panel-backlog .item-backlog').length;
+    const doneItems    = document.querySelectorAll('#panel-done .item-done').length;
+    const total        = backlogItems + doneItems;
+
+    document.getElementById('cnt-backlog').textContent = backlogItems;
+    document.getElementById('cnt-done').textContent    = doneItems;
+    document.getElementById('done-total').textContent  = doneItems;
+    document.getElementById('done-bar').style.width    = (doneItems / total * 100).toFixed(1) + '%';
+
+    const high = document.querySelectorAll('#panel-backlog .prio-high').length;
+    const mid  = document.querySelectorAll('#panel-backlog .prio-mid').length;
+    const idea = document.querySelectorAll('#panel-backlog .prio-idea').length;
+    document.getElementById('bl-high').textContent = high;
+    document.getElementById('bl-mid').textContent  = mid;
+    document.getElementById('bl-idea').textContent = idea;
+  }
+
+  updateCounts();
+</script>
+</body>
+</html>

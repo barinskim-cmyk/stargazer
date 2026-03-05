@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx cap:*)",
+      "Bash(wc:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stargazer — План MVP</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0a0a14;
+    color: #e0e0f0;
+    padding: 32px 24px 64px;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid #2a2a3a;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  header .subtitle {
+    color: #888;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+  }
+  .stars {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    opacity: 0.6;
+  }
+
+  .block {
+    margin-bottom: 36px;
+    background: #111120;
+    border-radius: 12px;
+    border: 1px solid #1e1e30;
+    overflow: hidden;
+  }
+  .block-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: #14142a;
+    border-bottom: 1px solid #1e1e30;
+    cursor: pointer;
+    user-select: none;
+  }
+  .block-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .block-a .block-letter { background: #3b2d8a; color: #c4b5fd; }
+  .block-b .block-letter { background: #1a3a5c; color: #7dd3fc; }
+  .block-c .block-letter { background: #1a4a2a; color: #86efac; }
+  .block-d .block-letter { background: #4a2a1a; color: #fdba74; }
+  .block-e .block-letter { background: #3a1a1a; color: #fca5a5; }
+  .block-f .block-letter { background: #2a2a1a; color: #fde68a; }
+
+  .block-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+  }
+  .block-desc {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: 2px;
+  }
+  .block-progress {
+    font-size: 0.75rem;
+    color: #555;
+    white-space: nowrap;
+  }
+  .block-progress span {
+    color: #a78bfa;
+    font-weight: 600;
+  }
+
+  .items {
+    padding: 8px 0;
+  }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 20px;
+    border-bottom: 1px solid #191928;
+    transition: background 0.15s;
+  }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: #16162a; }
+
+  .item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #333;
+    border-radius: 4px;
+    background: #0a0a14;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 2px;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .item input[type="checkbox"]:checked {
+    background: #5b3fa0;
+    border-color: #7c5fd0;
+  }
+  .item input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    top: -1px;
+    left: 2px;
+    font-size: 12px;
+    color: #fff;
+    font-weight: 700;
+  }
+  .item label {
+    flex: 1;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: #ccc;
+  }
+  .item input:checked + label {
+    color: #555;
+    text-decoration: line-through;
+  }
+  .item .tag {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+    margin-top: 3px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .tag-code { background: #1a2a3a; color: #7dd3fc; }
+  .tag-design { background: #2a1a3a; color: #c4b5fd; }
+  .tag-back { background: #1a2a1a; color: #86efac; }
+  .tag-store { background: #3a2a1a; color: #fdba74; }
+  .tag-manual { background: #2a1a1a; color: #fca5a5; }
+
+  .note {
+    font-size: 0.78rem;
+    color: #555;
+    padding: 2px 0 0 30px;
+    font-style: italic;
+  }
+
+  .progress-bar-wrap {
+    background: #1a1a2a;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 36px;
+    border: 1px solid #1e1e30;
+  }
+  .progress-bar-wrap h3 {
+    font-size: 0.8rem;
+    color: #666;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .progress-bar {
+    height: 6px;
+    background: #1e1e30;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #5b3fa0, #a78bfa);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .progress-numbers {
+    font-size: 0.8rem;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-numbers strong { color: #a78bfa; }
+
+  .decisions {
+    background: #111120;
+    border: 1px solid #1e1e30;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 36px;
+  }
+  .decisions h3 {
+    font-size: 0.75rem;
+    color: #666;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .decision {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #191928;
+    font-size: 0.85rem;
+  }
+  .decision:last-child { border-bottom: none; }
+  .decision .icon { font-size: 1rem; flex-shrink: 0; }
+  .decision .text { color: #aaa; }
+  .decision .text strong { color: #e0e0f0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="stars">✦ ✧ ✦</div>
+  <h1>STARGAZER</h1>
+  <div class="subtitle">ПЛАН РАЗРАБОТКИ MVP</div>
+</header>
+
+<!-- Ключевые решения -->
+<div class="decisions">
+  <h3>⚡ Ключевые решения</h3>
+  <div class="decision"><span class="icon">🎨</span><span class="text"><strong>Одна тема</strong> — только тёмная звёздная тема в MVP</span></div>
+  <div class="decision"><span class="icon">👥</span><span class="text"><strong>Мультиплеер</strong> — убрать с фронтенда, оставить в бэкенде на потом</span></div>
+  <div class="decision"><span class="icon">🌌</span><span class="text"><strong>Общее небо</strong> — созвездия всех игроков на одном экране</span></div>
+  <div class="decision"><span class="icon">💾</span><span class="text"><strong>Сохранение</strong> — только победитель, по желанию, за одноразовую покупку</span></div>
+  <div class="decision"><span class="icon">🔐</span><span class="text"><strong>Логин</strong> — Apple Sign In или Google (через Supabase Auth)</span></div>
+</div>
+
+<!-- Общий прогресс -->
+<div class="progress-bar-wrap">
+  <h3>Общий прогресс</h3>
+  <div class="progress-bar"><div class="progress-fill" id="total-fill" style="width:0%"></div></div>
+  <div class="progress-numbers"><span>Выполнено: <strong id="done-count">0</strong></span><span>Всего: <strong id="total-count">0</strong></span></div>
+</div>
+
+<!-- БЛОК A -->
+<div class="block block-a">
+  <div class="block-header">
+    <div class="block-letter">A</div>
+    <div>
+      <div class="block-title">Онбординг и регистрация</div>
+      <div class="block-desc">Первый вход, обучение, ранги</div>
+    </div>
+    <div class="block-progress"><span id="prog-a">0</span>/8</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="a1" checked><label for="a1">Экран первого входа — Apple Sign In + Google</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="a2"><label for="a2">Supabase Auth — настроить Apple и Google провайдеры</label><span class="tag tag-back">Бэк</span></div>
+    <div class="item"><input type="checkbox" id="a7" checked><label for="a7">Регистрация и логин через email/пароль (Supabase Auth)</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="a3" checked><label for="a3">Состояние "гость" — можно играть без логина, но не сохранять</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="a4" checked><label for="a4">Обучение — интерактивное, прямо в игре: звёзды загораются, ведут игрока через первую партию</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="a5" checked><label for="a5">Показывать обучение только при первом запуске (флаг в localStorage)</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="a6" checked><label for="a6">Пересмотр системы рангов — 10 рангов, медленная прогрессия</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="a8" checked><label for="a8">Скрытие UI во время игры — только canvas, кнопка ··· для показа панелей</label><span class="tag tag-code">Код</span></div>
+  </div>
+</div>
+
+<!-- БЛОК B -->
+<div class="block block-b">
+  <div class="block-header">
+    <div class="block-letter">B</div>
+    <div>
+      <div class="block-title">Главная страница</div>
+      <div class="block-desc">Замена текущему стартовому экрану</div>
+    </div>
+    <div class="block-progress"><span id="prog-b">0</span>/7</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="b1" checked><label for="b1">Новый главный экран — профиль, ранг, статистика (заменяет #start)</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="b2" checked><label for="b2">Превью последних созвездий игрока на главной</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="b3" checked><label for="b3">Кнопки навигации — Играть, Мои созвездия, Общее небо</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="b4" checked><label for="b4">Убрать поле ввода имени (#name-step) — имя берётся из профиля</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="b5" checked><label for="b5">Убрать дуэльный режим (#game-mode-step) с фронтенда</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="b6" checked><label for="b6">Скрыть переключатель тем из UI (темы остаются в коде на будущее)</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="b7" checked><label for="b7">Удалить #change-rank-btn (dev-инструмент)</label><span class="tag tag-code">Код</span></div>
+  </div>
+</div>
+
+<!-- БЛОК C -->
+<div class="block block-c">
+  <div class="block-header">
+    <div class="block-letter">C</div>
+    <div>
+      <div class="block-title">Сохранение созвездий</div>
+      <div class="block-desc">Победный экран, покупка, Supabase</div>
+    </div>
+    <div class="block-progress"><span id="prog-c">0</span>/7</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="c1" checked><label for="c1">Победный экран: добавить кнопку "Сохранить в небо" (#name-constellation уже есть)</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="c2" checked><label for="c2">Сериализация созвездия — сохранить points, lines, polygons в JSON</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="c3" checked><label for="c3">Таблица constellations в Supabase (user_id, name, data JSON, created_at) + RLS</label><span class="tag tag-back">Бэк</span></div>
+    <div class="item"><input type="checkbox" id="c4" checked><label for="c4">Интеграция Supabase JS в index.html — первое подключение к API</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="c5"><label for="c5">In-App Purchase через @capacitor-community/in-app-purchases или RevenueCat</label><span class="tag tag-store">App Store</span></div>
+    <div class="item"><input type="checkbox" id="c6"><label for="c6">Создать продукт в App Store Connect (consumable, ~0.99$)</label><span class="tag tag-manual">Вручную</span></div>
+    <div class="item"><input type="checkbox" id="c7"><label for="c7">Запись созвездия в Supabase после успешной оплаты</label><span class="tag tag-back">Бэк</span></div>
+  </div>
+</div>
+
+<!-- БЛОК D -->
+<div class="block block-d">
+  <div class="block-header">
+    <div class="block-letter">D</div>
+    <div>
+      <div class="block-title">Экраны галактики</div>
+      <div class="block-desc">Мои созвездия + Общее небо</div>
+    </div>
+    <div class="block-progress"><span id="prog-d">0</span>/7</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="d1" checked><label for="d1">Экран "Мои созвездия" — переделать существующий #journey или новый экран</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="d2"><label for="d2">Загрузка созвездий пользователя из Supabase</label><span class="tag tag-back">Бэк</span></div>
+    <div class="item"><input type="checkbox" id="d3" checked><label for="d3">Миниатюра созвездия — рендер в offscreen canvas (функция drawConstellation уже есть)</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="d4" checked><label for="d4">Экран "Общее небо" — все созвездия всех игроков на звёздном фоне</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="d5" checked><label for="d5">Загрузка созвездий из Supabase с пагинацией</label><span class="tag tag-back">Бэк</span></div>
+    <div class="item"><input type="checkbox" id="d6" checked><label for="d6">Клик на своё созвездие → переход в общее небо с подсветкой своего</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="d7" checked><label for="d7">Реалтайм обновление общего неба (Supabase realtime subscriptions)</label><span class="tag tag-back">Бэк</span></div>
+  </div>
+</div>
+
+<!-- БЛОК E -->
+<div class="block block-e">
+  <div class="block-header">
+    <div class="block-letter">E</div>
+    <div>
+      <div class="block-title">Анимации и интерфейс</div>
+      <div class="block-desc">Оживить игровой процесс</div>
+    </div>
+    <div class="block-progress"><span id="prog-e">0</span>/6</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="e1" checked><label for="e1">Анимация соединения точек — линия "рисуется" плавно</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="e2" checked><label for="e2">Победный экран — вспышка, разлёт звёзд</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="e3" checked><label for="e3">Переходы между экранами — fade или slide</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="e4" checked><label for="e4">Анимация появления точек в начале игры</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="e5" checked><label for="e5">Звуковые эффекты — соединение, победа</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="e6" checked><label for="e6">Тактильный отклик (haptics) при соединении точек</label><span class="tag tag-code">Код</span></div>
+  </div>
+</div>
+
+<!-- БЛОК G -->
+<div class="block block-a">
+  <div class="block-header">
+    <div class="block-letter" style="background:#1a3a4a;color:#67e8f9">G</div>
+    <div>
+      <div class="block-title">Масштабирование общего неба</div>
+      <div class="block-desc">Кластеризация + личное небо</div>
+    </div>
+    <div class="block-progress"><span id="prog-g">0</span>/7</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="g1" checked><label for="g1">Кластеризация: до 500 созвездий — рендер всех, после — объединять в кластеры</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="g2" checked><label for="g2">Кластер = светящийся объект с числом (N) внутри, разбивается при зуме</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="g3" checked><label for="g3">Виртуальный рендер — рисовать только созвездия в текущем viewport</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="g4"><label for="g4">Lazy loading — подгружать созвездия по мере приближения (Supabase spatial query)</label><span class="tag tag-back">Бэк</span></div>
+    <div class="item"><input type="checkbox" id="g5" checked><label for="g5">Личное небо — отдельный экран только с созвездиями текущего пользователя</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="g6" checked><label for="g6">Личное небо: тот же зумируемый canvas но только свои созвездия + имена</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="g7" checked><label for="g7">Кнопка переключения Общее небо ↔ Личное небо</label><span class="tag tag-code">Код</span></div>
+  </div>
+</div>
+
+<!-- БЛОК H -->
+<div class="block block-b">
+  <div class="block-header">
+    <div class="block-letter" style="background:#2a1a3a;color:#e879f9">H</div>
+    <div>
+      <div class="block-title">Визуал и баги</div>
+      <div class="block-desc">Цветовая схема, артефакты, canvas</div>
+    </div>
+    <div class="block-progress"><span id="prog-h">0</span>/7</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="h1" checked><label for="h1">Тёплая цветовая схема — синие/голубые заменены на золото/коралл/янтарь</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="h2" checked><label for="h2">Артефакты наслоения звёзд — ctx.clearRect в начале draw(), ctx.save/restore</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="h3" checked><label for="h3">Лучи звёзд укорочены — не пронизывают весь canvas</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="h4" checked><label for="h4">Ограничение размера canvas — max 430×932px</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="h5" checked><label for="h5">Обновление "Последних созвездий" на главной после сохранения</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="h6"><label for="h6">Safe area отступы — все элементы в пределах скруглений экрана</label><span class="tag tag-code">Код</span></div>
+    <div class="item"><input type="checkbox" id="h7" checked><label for="h7">Доработка цветовой гаммы графических элементов — единая палитра для звёзд, лучей, линий созвездий, полигонов, фона неба и UI-панелей</label><span class="tag tag-design">Дизайн</span></div>
+    <p class="note">Подпункты: градиент свечения звёзд (gold/coral/amber), цвет линий-рёбер созвездия, заливка полигонов, цвет звёздного фона, цвет заблокированных звёзд, акцентный цвет UI</p>
+  </div>
+</div>
+
+<!-- БЛОК F -->
+<div class="block block-f">
+  <div class="block-header">
+    <div class="block-letter">F</div>
+    <div>
+      <div class="block-title">Релиз</div>
+      <div class="block-desc">App Store и финальная подготовка</div>
+    </div>
+    <div class="block-progress"><span id="prog-f">0</span>/6</div>
+  </div>
+  <div class="items">
+    <div class="item"><input type="checkbox" id="f1"><label for="f1">App Icon — все размеры</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="f2"><label for="f2">Splash screen</label><span class="tag tag-design">Дизайн</span></div>
+    <div class="item"><input type="checkbox" id="f3"><label for="f3">Privacy Policy — опубликовать страницу</label><span class="tag tag-manual">Вручную</span></div>
+    <div class="item"><input type="checkbox" id="f4"><label for="f4">TestFlight — тест на реальном устройстве</label><span class="tag tag-manual">Вручную</span></div>
+    <div class="item"><input type="checkbox" id="f5"><label for="f5">Скриншоты для App Store</label><span class="tag tag-manual">Вручную</span></div>
+    <div class="item"><input type="checkbox" id="f6"><label for="f6">Сабмит в App Store</label><span class="tag tag-manual">Вручную</span></div>
+  </div>
+</div>
+
+<script>
+  const BLOCKS = ['a','b','c','d','e','g','h','f'];
+  const COUNTS = {a:8, b:7, c:7, d:7, e:6, g:7, h:6, f:6};
+  const KEY = 'stargazer_plan_v1';
+
+  function save() {
+    const state = {};
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      state[cb.id] = cb.checked;
+    });
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  function load() {
+    const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    Object.entries(saved).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.checked = val;
+    });
+  }
+
+  function updateProgress() {
+    let totalDone = 0, totalAll = 0;
+    BLOCKS.forEach(b => {
+      const count = COUNTS[b];
+      let done = 0;
+      for (let i = 1; i <= count; i++) {
+        const el = document.getElementById(b + i);
+        if (el && el.checked) done++;
+      }
+      document.getElementById('prog-' + b).textContent = done;
+      totalDone += done;
+      totalAll += count;
+    });
+    document.getElementById('done-count').textContent = totalDone;
+    document.getElementById('total-count').textContent = totalAll;
+    document.getElementById('total-fill').style.width = (totalDone / totalAll * 100) + '%';
+  }
+
+  load();
+  updateProgress();
+
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => { save(); updateProgress(); });
+  });
+</script>
+</body>
+</html>
