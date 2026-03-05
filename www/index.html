@@ -34,14 +34,16 @@
       --th-vignette:    0;
       --th-btn-glow:    rgba(255,245,210,0.18);
       --th-font:        'Raleway', sans-serif;
+      --th-card-bg:     rgba(248,247,245,0.04);
+      --th-card-border: rgba(248,247,245,0.09);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100dvh; background: #1a1a2e; font-family: var(--th-font, 'Raleway', sans-serif); color: var(--th-text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body { margin: 0; min-height: 100dvh; background: var(--th-bg); font-family: var(--th-font, 'Raleway', sans-serif); color: var(--th-text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
     canvas { cursor: pointer; display: block; touch-action: none; }
 
     /* ── start screen ── */
     #start {
-      position: fixed; inset: 0; background: #1a1a2e; box-sizing: border-box;
+      position: fixed; inset: 0; background: var(--th-bg); box-sizing: border-box;
       display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 28px;
       z-index: 10;
       padding-top: calc(env(safe-area-inset-top, 0px) + 72px);
@@ -49,7 +51,7 @@
       padding-left: calc(env(safe-area-inset-left, 0px) + 28px);
       padding-right: calc(env(safe-area-inset-right, 0px) + 28px);
     }
-    #start h1 { font-size: 13px; font-weight: 200; letter-spacing: 10px; color: rgba(248,247,245,0.4); text-transform: uppercase; margin: 0 0 8px; }
+    #start h1 { font-size: 13px; font-weight: 200; letter-spacing: 10px; color: var(--th-text2); text-transform: uppercase; margin: 0 0 8px; }
     #title-scattered {
       position: fixed;
       inset: 0;
@@ -239,7 +241,7 @@
     }
     #name-const-actions button:hover { filter: brightness(1.15) !important; }
     #name-const-guest {
-      font-size: 12px; color: rgba(248,247,245,0.35);
+      font-size: 12px; color: var(--th-text2);
       text-align: center; display: none;
     }
     #loss-content {
@@ -331,20 +333,20 @@
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
       background: var(--th-panel-bg); border-top: 1px solid var(--th-btn-border);
     }
-    /* ── warm tint for game UI panels (stargazer theme) ── */
+    /* ── game UI panels: theme-aware ── */
     #top-panel, #bottom-panel {
-      background: rgba(16,15,13,0.85);
-      border-color: rgba(255,245,210,0.22);
+      background: var(--th-panel-bg);
+      border-color: var(--th-btn-border);
     }
-    #top-panel { border-bottom-color: rgba(255,245,210,0.22); }
+    #top-panel { border-bottom-color: var(--th-btn-border); }
     #top-panel label, #top-panel span, #top-panel p,
     #bottom-panel label, #bottom-panel span, #bottom-panel p {
-      color: rgba(255,245,210,0.90);
+      color: var(--th-text);
     }
     #turn-display {
       background: transparent !important;
-      color: rgba(255,245,210,0.95) !important;
-      border: 1px solid rgba(255,245,210,0.38) !important;
+      color: var(--th-btn-text) !important;
+      border: 1px solid var(--th-btn-border) !important;
     }
     #rank-display { font-size: 13px; color: var(--th-text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex-shrink: 1; }
     #last-move-btn {
@@ -372,7 +374,7 @@
     #journey {
       position: fixed; inset: 0; z-index: 11;
       display: none; flex-direction: column;
-      background: #0b0b14; box-sizing: border-box;
+      background: var(--th-bg); box-sizing: border-box;
     }
     #journey-topbar {
       display: flex; align-items: center; gap: 14px; flex-shrink: 0;
@@ -380,7 +382,7 @@
     }
     #journey-back-btn {}
     #journey-screen-title {
-      font-size: 20px; font-weight: 300; color: rgba(248,247,245,0.88); letter-spacing: 0.4px;
+      font-size: 20px; font-weight: 300; color: var(--th-text); letter-spacing: 0.4px;
     }
     #journey-grid {
       flex: 1; overflow-y: auto;
@@ -389,30 +391,30 @@
     }
     .saved-card {
       width: calc(50% - 6px);
-      background: rgba(248,247,245,0.04); border: 1px solid rgba(248,247,245,0.08);
+      background: var(--th-card-bg); border: 1px solid var(--th-card-border);
       border-radius: 10px; overflow: hidden; cursor: pointer;
       transition: border-color 0.15s;
     }
-    .saved-card:active { border-color: rgba(225,223,220,0.50); }
+    .saved-card:active { border-color: var(--th-btn-border); }
     .saved-card canvas { display: block; width: 100%; height: auto; }
     .saved-card-info { padding: 7px 10px 9px; }
     .saved-card-name {
-      font-size: 12px; color: rgba(248,247,245,0.72);
+      font-size: 12px; color: var(--th-text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       text-align: center;
     }
     .journey-empty {
       width: 100%; text-align: center; padding-top: 80px;
-      font-size: 15px; color: rgba(248,247,245,0.32); line-height: 1.7;
+      font-size: 15px; color: var(--th-text2); line-height: 1.7;
     }
     #journey-btn {
       margin-top: 4px; font-size: 14px; padding: 0 16px; min-height: 44px;
       display: flex; align-items: center;
-      background: transparent; border: 1px solid rgba(225,223,220,0.30);
-      border-radius: 6px; color: rgba(248,247,245,0.50); cursor: pointer;
+      background: transparent; border: 1px solid var(--th-card-border);
+      border-radius: 6px; color: var(--th-text2); cursor: pointer;
       transition: color 0.15s, border-color 0.15s; font-family: var(--th-font);
     }
-    #journey-btn:hover { color: rgba(248,247,245,0.80); border-color: rgba(225,223,220,0.60); }
+    #journey-btn:hover { color: var(--th-text); border-color: var(--th-btn-border); }
 
     /* ── screen transitions ── */
     #start, #game { transition: opacity 0.2s; }
@@ -443,19 +445,19 @@
     /* Nothing overflows the viewport */
     * { max-width: 100%; }
 
-    /* All buttons: warm styled */
+    /* All buttons: theme-aware */
     button:not(.theme-btn) {
       background: transparent !important;
-      border: 1px solid rgba(255,245,210,0.55) !important;
-      color: rgba(255,245,210,0.95) !important;
+      border: 1px solid var(--th-btn-border) !important;
+      color: var(--th-btn-text) !important;
     }
     button:not(.theme-btn):hover, button:not(.theme-btn):active {
-      background: rgba(255,245,210,0.06) !important;
-      box-shadow: 0 0 14px 2px rgba(255,245,210,0.18) !important;
+      background: var(--th-card-bg) !important;
+      box-shadow: 0 0 14px 2px var(--th-btn-glow) !important;
     }
     /* ── exceptions: buttons that should stay minimal ── */
     #auth-apple { background: #FFFFFF !important; color: #000000 !important; border: none !important; box-shadow: none !important; }
-    #auth-skip  { background: transparent !important; border: none !important; box-shadow: none !important; color: rgba(248,247,245,0.35) !important; }
+    #auth-skip  { background: transparent !important; border: none !important; box-shadow: none !important; color: var(--th-text2) !important; }
     .home-nav-btn, #back-to-menu-btn { background: transparent !important; border: none !important; box-shadow: none !important; }
     #home-length-display, button.home-len-btn { background: transparent !important; border: none !important; box-shadow: none !important; color: inherit !important; }
 
@@ -475,7 +477,7 @@
       min-width: 44px; min-height: 44px;
       display: flex; align-items: center; justify-content: center;
       font-size: 20px; line-height: 1;
-      color: rgba(248,247,245,0.38);
+      color: var(--th-text2);
       padding: 0; cursor: pointer;
       transition: color 0.15s;
       flex-shrink: 0;
@@ -487,7 +489,7 @@
     #stub-back-btn:active,
     #const-detail-back-btn:active,
     #settings-back-btn:active {
-      color: rgba(248,247,245,0.85) !important;
+      color: var(--th-text) !important;
     }
     #ui-toggle-btn { background: rgba(0,0,0,0.30) !important; border: 1px solid rgba(248,247,245,0.14) !important; color: rgba(248,247,245,0.50) !important; }
 
@@ -528,7 +530,7 @@
     /* ── auth screen ── */
     #auth-screen {
       position: fixed; inset: 0; z-index: 20;
-      background: #0b0b14;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
       justify-content: center; align-items: center; gap: 16px;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 48px);
@@ -539,7 +541,7 @@
     #auth-screen h2 {
       margin: 0 0 16px;
       font-size: 13px; font-weight: 200; letter-spacing: 10px;
-      color: rgba(248,247,245,0.4); text-transform: uppercase;
+      color: var(--th-text2); text-transform: uppercase;
     }
     .auth-btn {
       width: 280px; padding: 14px 20px; border-radius: 10px;
@@ -567,7 +569,7 @@
     /* ── home screen ── */
     #home-screen {
       position: fixed; inset: 0; z-index: 15;
-      background: #0b0b14;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 14px);
       padding-bottom: 0;
@@ -583,19 +585,19 @@
     #home-header { display: flex; flex-direction: column; gap: 6px; }
     #home-player-name {
       font-size: 24px; font-weight: 300; letter-spacing: 0.3px;
-      color: rgba(248,247,245,0.88); cursor: pointer;
+      color: var(--th-text); cursor: pointer;
     }
     #home-player-name:active { opacity: 0.6; }
     #home-name-input {
       display: none;
       font-size: 24px; font-weight: 300; letter-spacing: 0.3px;
-      color: rgba(248,247,245,0.88); font-family: inherit;
+      color: var(--th-text); font-family: inherit;
       background: none; border: none;
-      border-bottom: 1px solid rgba(248,247,245,0.28);
+      border-bottom: 1px solid var(--th-btn-border);
       outline: none; padding: 0 0 2px; width: 100%; max-width: 260px;
     }
     #home-rank-row { display: flex; align-items: center; gap: 12px; }
-    #home-rating-pts { font-size: 13px; color: rgba(225,223,220,0.50); letter-spacing: 0.3px; }
+    #home-rating-pts { font-size: 13px; color: var(--th-text2); letter-spacing: 0.3px; }
     #home-center {
       flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: flex-end; gap: 0;
@@ -610,11 +612,11 @@
       background: none !important; border: none !important; outline: none !important;
       -webkit-appearance: none; box-shadow: none !important;
       cursor: pointer; padding: 10px;
-      color: rgba(248,247,245,0.28); font-size: 17px;
+      color: var(--th-text2); font-size: 17px;
       line-height: 1; transition: color 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
-    #home-settings-icon:active { color: rgba(248,247,245,0.75); }
+    #home-settings-icon:active { color: var(--th-text); }
 
     /* ── length picker ── */
     #home-length-picker {
@@ -625,20 +627,20 @@
       box-shadow: none !important;
       font-family: inherit; cursor: pointer; padding: 8px 0;
       font-size: 12px; font-weight: 300; letter-spacing: 1.5px; text-transform: lowercase;
-      color: rgba(248,247,245,0.22);
+      color: var(--th-text2);
       transition: color 0.15s;
       -webkit-tap-highlight-color: transparent;
     }
     .home-len-btn.active {
-      color: rgba(248,247,245,0.90);
+      color: var(--th-text);
     }
     .home-len-btn:active { opacity: 0.6; }
 
     /* ── Unified button style (Sky tile, ИГРАТЬ) ── */
     #home-sky-nav-btn,
     #home-play-btn {
-      background: rgba(248,247,245,0.05);
-      border: 1px solid rgba(248,247,245,0.10) !important;
+      background: var(--th-card-bg);
+      border: 1px solid var(--th-card-border) !important;
       border-radius: 20px;
       -webkit-appearance: none; outline: none; cursor: pointer;
       transition: opacity 0.15s;
@@ -654,10 +656,10 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
       margin-top: 10px; padding: 0;
     }
-    .home-sky-icon { font-size: 14px; color: rgba(248,247,245,0.45); line-height: 1; }
+    .home-sky-icon { font-size: 14px; color: var(--th-text2); line-height: 1; }
     .home-sky-label {
       font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
-      color: rgba(248,247,245,0.35);
+      color: var(--th-text2);
     }
 
     /* ── bottom: ИГРАТЬ + safe-area ── */
@@ -668,7 +670,7 @@
     #home-play-btn {
       width: 100%;
       font-size: 17px; font-weight: 300; letter-spacing: 5px; text-transform: uppercase;
-      color: rgba(248,247,245,0.92);
+      color: var(--th-text);
       padding: 28px 28px;
     }
     /* keep nav icon class for other screens that may still use it */
@@ -677,7 +679,7 @@
     /* ── sky hub screen ── */
     #sky-hub-screen {
       position: fixed; inset: 0; z-index: 16;
-      background: #0b0b14;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
     }
     #sky-hub-topbar {
@@ -694,8 +696,8 @@
     }
     .sky-hub-btn {
       flex: 1; width: 100%;
-      background: rgba(248,247,245,0.04);
-      border: 1px solid rgba(248,247,245,0.08);
+      background: var(--th-card-bg);
+      border: 1px solid var(--th-card-border);
       border-radius: 24px;
       -webkit-appearance: none; outline: none;
       font-family: inherit; cursor: pointer; text-align: left;
@@ -706,16 +708,16 @@
     }
     .sky-hub-btn:last-child { border-bottom: none; }
     .sky-hub-btn:active { opacity: 0.45; }
-    .sky-hub-btn-icon { font-size: 14px; color: rgba(248,247,245,0.25); flex-shrink: 0; }
+    .sky-hub-btn-icon { font-size: 14px; color: var(--th-text2); flex-shrink: 0; }
     .sky-hub-btn-label {
       font-size: 24px; font-weight: 300; letter-spacing: 0.3px;
-      color: rgba(248,247,245,0.80);
+      color: var(--th-text);
     }
 
     /* ── stub screens (Мои созвездия / Общее небо / Настройки) ── */
     #stub-screen {
       position: fixed; inset: 0; z-index: 16;
-      background: #0b0b14;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
       padding-left:   calc(env(safe-area-inset-left, 0px)   + 28px);
@@ -731,19 +733,19 @@
     #stub-back-btn {}
     #stub-title {
       font-size: 13px; font-weight: 200; letter-spacing: 6px; text-transform: uppercase;
-      color: rgba(248,247,245,0.40);
+      color: var(--th-text2);
     }
     #stub-body {
       flex: 1; display: flex; align-items: center; justify-content: center;
     }
     #stub-body p {
-      font-size: 14px; color: rgba(248,247,245,0.20); text-align: center; line-height: 1.7;
+      font-size: 14px; color: var(--th-text2); text-align: center; line-height: 1.7;
     }
 
     /* ── constellation detail screen ── */
     #const-detail-screen {
       position: fixed; inset: 0; z-index: 19;
-      background: #060612;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
     }
     #const-detail-topbar {
@@ -763,22 +765,22 @@
     }
     #const-detail-name-text {
       font-size: 20px; font-weight: 300; letter-spacing: 0.4px;
-      color: rgba(248,247,245,0.90); cursor: text;
+      color: var(--th-text); cursor: text;
     }
     #const-detail-name-input {
       font-size: 20px; font-weight: 300; text-align: center;
-      color: rgba(255,245,210,0.95); width: 100%;
+      color: var(--th-btn-text); width: 100%;
       background: transparent; border: none;
-      border-bottom: 1px solid rgba(255,245,210,0.30);
+      border-bottom: 1px solid var(--th-btn-border);
       font-family: var(--th-font); outline: none; box-sizing: border-box; padding: 2px 0;
     }
     #const-detail-name-hint {
       margin-top: 7px;
-      font-size: 11px; color: rgba(255,245,210,0.20); letter-spacing: 0.3px;
+      font-size: 11px; color: var(--th-text2); letter-spacing: 0.3px;
     }
     #const-detail-addr {
       margin-top: 5px;
-      font-size: 10px; color: rgba(255,245,210,0.18); letter-spacing: 0.4px;
+      font-size: 10px; color: var(--th-text2); letter-spacing: 0.4px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     #const-detail-bottombar {
@@ -788,21 +790,21 @@
     #const-detail-share-btn, #const-detail-publish-btn {
       flex: 1; padding: 13px 10px; border-radius: 8px;
       font-size: 14px; font-family: var(--th-font); cursor: pointer;
-      border: 1px solid rgba(255,245,210,0.28);
-      color: rgba(255,245,210,0.82); background: transparent;
+      border: 1px solid var(--th-btn-border);
+      color: var(--th-btn-text); background: transparent;
       transition: background 0.15s, opacity 0.15s;
     }
     #const-detail-share-btn:active, #const-detail-publish-btn:active {
-      background: rgba(255,245,210,0.07);
+      background: var(--th-card-bg);
     }
     #const-detail-publish-btn.published {
-      color: rgba(255,245,210,0.28); border-color: rgba(255,245,210,0.10);
+      color: var(--th-text2); border-color: var(--th-card-border);
     }
 
     /* ── settings screen ── */
     #settings-screen {
       position: fixed; inset: 0; z-index: 17;
-      background: #0b0b14;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
       padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
     }
@@ -813,35 +815,35 @@
     #settings-back-btn {}
     #settings-screen-title {
       font-size: 13px; font-weight: 200; letter-spacing: 6px; text-transform: uppercase;
-      color: rgba(248,247,245,0.40);
+      color: var(--th-text2);
     }
     .settings-section-title {
       font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
-      color: rgba(248,247,245,0.22); padding: 0 28px; margin-bottom: 6px;
+      color: var(--th-text2); padding: 0 28px; margin-bottom: 6px;
     }
     .settings-group {
-      border-top: 1px solid rgba(255,245,210,0.07);
-      border-bottom: 1px solid rgba(255,245,210,0.07);
+      border-top: 1px solid var(--th-card-border);
+      border-bottom: 1px solid var(--th-card-border);
       margin-bottom: 28px;
     }
     .settings-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 15px 28px;
-      border-bottom: 1px solid rgba(255,245,210,0.05);
+      border-bottom: 1px solid var(--th-card-border);
     }
     .settings-row:last-child { border-bottom: none; }
     .settings-row-label { display: flex; flex-direction: column; gap: 3px; }
     .settings-row-title {
-      font-size: 15px; font-weight: 300; color: rgba(248,247,245,0.88);
+      font-size: 15px; font-weight: 300; color: var(--th-text);
     }
     .settings-row-sub {
-      font-size: 12px; color: rgba(248,247,245,0.28);
+      font-size: 12px; color: var(--th-text2);
     }
     /* Toggle switch */
     .s-toggle {
       position: relative; width: 48px; height: 28px;
-      background: rgba(255,245,210,0.08);
-      border: 1px solid rgba(255,245,210,0.20);
+      background: var(--th-card-bg);
+      border: 1px solid var(--th-btn-border);
       border-radius: 14px;
       cursor: pointer; transition: background 0.2s, border-color 0.2s;
       flex-shrink: 0;
@@ -850,32 +852,32 @@
       content: '';
       position: absolute; top: 3px; left: 3px;
       width: 20px; height: 20px; border-radius: 50%;
-      background: rgba(255,245,210,0.35);
+      background: var(--th-text2);
       transition: transform 0.2s, background 0.2s;
     }
     .s-toggle.on {
-      background: rgba(255,245,210,0.16);
-      border-color: rgba(255,245,210,0.55);
+      background: var(--th-card-bg);
+      border-color: var(--th-btn-border);
     }
     .s-toggle.on::after {
       transform: translateX(20px);
-      background: rgba(255,245,210,0.95);
+      background: var(--th-btn-text);
     }
     /* Segment control for star glow */
     .s-segment {
-      display: flex; border: 1px solid rgba(255,245,210,0.25);
+      display: flex; border: 1px solid var(--th-btn-border);
       border-radius: 8px; overflow: hidden;
     }
     .s-seg-btn {
       padding: 6px 13px; font-size: 12px; font-weight: 300;
-      color: rgba(248,247,245,0.40);
+      color: var(--th-text2);
       background: transparent; border: none; cursor: pointer;
       transition: background 0.15s, color 0.15s;
     }
-    .s-seg-btn + .s-seg-btn { border-left: 1px solid rgba(255,245,210,0.18); }
+    .s-seg-btn + .s-seg-btn { border-left: 1px solid var(--th-card-border); }
     .s-seg-btn.active {
-      background: rgba(255,245,210,0.12);
-      color: rgba(255,245,210,0.92);
+      background: var(--th-card-bg);
+      color: var(--th-btn-text);
     }
     /* Theme selector */
     .s-theme-row {
@@ -884,23 +886,23 @@
     .s-theme-btn {
       flex: 1 1 calc(50% - 4px); padding: 10px 4px;
       font-size: 12px; font-weight: 300; letter-spacing: 0.5px;
-      color: rgba(248,247,245,0.38);
-      background: rgba(255,245,210,0.04);
-      border: 1px solid rgba(255,245,210,0.10);
+      color: var(--th-text2);
+      background: var(--th-card-bg);
+      border: 1px solid var(--th-card-border);
       border-radius: 8px; cursor: pointer; font-family: inherit;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
     .s-theme-btn.active {
-      background: rgba(255,245,210,0.11);
-      border-color: rgba(255,245,210,0.42);
-      color: rgba(255,245,210,0.92);
+      background: var(--th-card-bg);
+      border-color: var(--th-btn-border);
+      color: var(--th-btn-text);
     }
     .s-theme-btn:active { opacity: 0.7; }
 
     /* ── sky screen ("Общее небо") ── */
     #sky-screen {
       position: fixed; inset: 0; z-index: 16;
-      display: none; background: #060612; overflow: hidden;
+      display: none; background: var(--th-bg); overflow: hidden;
     }
     #sky-canvas {
       position: absolute; inset: 0; display: block; touch-action: none; cursor: grab;
@@ -950,24 +952,24 @@
     }
     #sky-status {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-      font-size: 15px; color: rgba(248,247,245,0.35); pointer-events: none;
+      font-size: 15px; color: var(--th-text2); pointer-events: none;
       display: none; text-align: center; line-height: 1.7;
     }
     #sky-retry-btn {
       display: inline-block; margin-top: 10px;
-      background: none; border: 1px solid rgba(248,247,245,0.18);
+      background: none; border: 1px solid var(--th-card-border);
       border-radius: 20px; padding: 6px 20px;
       font-family: inherit; font-size: 12px; font-weight: 300;
-      letter-spacing: 1.5px; color: rgba(248,247,245,0.55);
+      letter-spacing: 1.5px; color: var(--th-text2);
       cursor: pointer; -webkit-tap-highlight-color: transparent;
       transition: color 0.15s, border-color 0.15s;
     }
-    #sky-retry-btn:active { color: rgba(248,247,245,0.92); border-color: rgba(248,247,245,0.5); }
+    #sky-retry-btn:active { color: var(--th-text); border-color: var(--th-btn-border); }
 
     /* ── tutorial screen ── */
     #tutorial-screen {
       position: fixed; inset: 0; z-index: 19;
-      background: #0b0b14;
+      background: var(--th-bg);
       display: flex; flex-direction: column;
       justify-content: center; align-items: center; gap: 20px;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 56px);
@@ -977,30 +979,30 @@
     }
     #tutorial-canvas {
       border-radius: 16px;
-      background: rgba(248,247,245,0.03);
+      background: var(--th-card-bg);
     }
     #tutorial-title {
       font-size: 19px; font-weight: 300; letter-spacing: 0.3px;
-      color: rgba(248,247,245,0.90); text-align: center; margin: 0;
+      color: var(--th-text); text-align: center; margin: 0;
       transition: opacity 0.35s ease;
     }
     #tutorial-desc {
-      font-size: 14px; color: rgba(248,247,245,0.42); text-align: center;
+      font-size: 14px; color: var(--th-text2); text-align: center;
       margin: 0; max-width: 280px; line-height: 1.65;
       transition: opacity 0.45s ease;
     }
     #tutorial-dots { display: flex; gap: 8px; align-items: center; }
     .tdot {
       width: 6px; height: 6px; border-radius: 50%;
-      background: rgba(248,247,245,0.18); transition: background 0.25s;
+      background: var(--th-card-border); transition: background 0.25s;
     }
-    .tdot.active { background: rgba(248,247,245,0.72); }
+    .tdot.active { background: var(--th-text2); }
     #tutorial-next-btn {
       width: 220px; padding: 14px; border-radius: 10px;
       font-size: 15px; cursor: pointer;
-      background: rgba(248,247,245,0.07) !important;
-      border: 1px solid rgba(248,247,245,0.14) !important;
-      color: rgba(248,247,245,0.88) !important;
+      background: var(--th-card-bg) !important;
+      border: 1px solid var(--th-btn-border) !important;
+      color: var(--th-btn-text) !important;
       transition: filter 0.15s;
     }
     #tutorial-next-btn:hover { filter: brightness(1.25) !important; }
@@ -4806,6 +4808,8 @@
         panelBg:       '#0b0b14',
         vignette:      0.45,
         grainOpacity:  0.06,
+        cardBg:        'rgba(248,247,245,0.04)',
+        cardBorder:    'rgba(248,247,245,0.09)',
         drawVictory:   defaultDrawVictory,
         // ── Sky screen ──────────────────────────────────────────────
         skyBg:         '#060612',
@@ -4840,6 +4844,8 @@
         panelBg:       '#FFFFFF',
         vignette:      0,
         grainOpacity:  0.02,
+        cardBg:        'rgba(0,0,0,0.04)',
+        cardBorder:    'rgba(0,0,0,0.10)',
         drawVictory:   drawVictoryMinimal,
         // ── Sky screen ──────────────────────────────────────────────
         skyBg:         '#FFFFFF',
@@ -4874,6 +4880,8 @@
         panelBg:       '#F5F0E8',
         vignette:      0.15,
         grainOpacity:  0.05,
+        cardBg:        'rgba(26,26,26,0.04)',
+        cardBorder:    'rgba(26,26,26,0.12)',
         drawVictory:   drawVictorySuprematist,
         // ── Sky screen ──────────────────────────────────────────────
         skyBg:         '#F5F0E8',
@@ -4908,6 +4916,8 @@
         panelBg:       '#F9F8F6',
         vignette:      0,
         grainOpacity:  0,
+        cardBg:        'rgba(58,42,26,0.04)',
+        cardBorder:    'rgba(224,90,58,0.18)',
         drawVictory:   drawVictoryChalk,
         // ── Sky screen ──────────────────────────────────────────────
         skyBg:         '#F9F8F6',
@@ -4951,6 +4961,8 @@
       root.style.setProperty('--th-accent',      t.accent);       // акцент (focus-кольцо, .active)
       root.style.setProperty('--th-btn-glow',    t.buttonGlow ?? 'transparent'); // свечение кнопок (stargazer)
       root.style.setProperty('--th-font',        t.font ?? "'Raleway', sans-serif");
+      root.style.setProperty('--th-card-bg',     t.cardBg     ?? 'rgba(128,128,128,0.04)'); // фон карточек/плиток
+      root.style.setProperty('--th-card-border', t.cardBorder ?? 'rgba(128,128,128,0.10)'); // граница карточек
       document.body.style.background = t.background;
       document.getElementById('start').style.background = t.background;
       document.getElementById('grain-overlay').style.opacity = t.grainOpacity;
@@ -5305,6 +5317,9 @@
           const plgs = _homeBgData.polygons || [];
 
           // polygons fill
+          const _thHome = THEMES[activeTheme] || THEMES.stargazer;
+          const _homeLineClr = _thHome.lines || 'rgba(248,247,245,0.88)';
+          const _homeFillClr = _thHome.captured || 'rgba(255,235,200,0.04)';
           plgs.forEach(poly => {
             if (!poly.path || poly.path.length < 3) return;
             ctx2.beginPath();
@@ -5314,7 +5329,7 @@
               else ctx2.lineTo(mpx(pt), mpy(pt));
             });
             ctx2.closePath();
-            ctx2.fillStyle = 'rgba(255,235,200,0.04)';
+            ctx2.fillStyle = _homeFillClr;
             ctx2.fill();
           });
 
@@ -5331,10 +5346,11 @@
                 ctx2.lineTo(mpx(pts[b]), mpy(pts[b]));
               }
             });
-            if (pass === 0) { ctx2.strokeStyle = 'rgba(248,247,245,0.05)'; ctx2.lineWidth = lw1; }
-            else if (pass === 1) { ctx2.strokeStyle = 'rgba(248,247,245,0.12)'; ctx2.lineWidth = lw2; }
-            else { ctx2.strokeStyle = 'rgba(248,247,245,0.75)'; ctx2.lineWidth = lw3; }
+            if (pass === 0) { ctx2.strokeStyle = _homeLineClr; ctx2.lineWidth = lw1; ctx2.globalAlpha = 0.05; }
+            else if (pass === 1) { ctx2.strokeStyle = _homeLineClr; ctx2.lineWidth = lw2; ctx2.globalAlpha = 0.15; }
+            else { ctx2.strokeStyle = _homeLineClr; ctx2.lineWidth = lw3; ctx2.globalAlpha = 0.75; }
             ctx2.stroke();
+            ctx2.globalAlpha = 1;
           }
 
           // stars with twinkling
