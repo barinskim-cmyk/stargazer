@@ -634,6 +634,9 @@
     }
     .home-len-btn.active {
       color: var(--th-text);
+      font-weight: 500;
+      text-shadow: 0 0 6px var(--th-len-glow, transparent),
+                   0 0 18px var(--th-len-glow, transparent);
     }
     .home-len-btn:active { opacity: 0.6; }
 
@@ -1489,7 +1492,7 @@
     <div id="home-center">
       <div id="home-length-picker">
         <button class="home-len-btn" data-count="7">короткая</button>
-        <button class="home-len-btn active" data-count="13">обычная</button>
+        <button class="home-len-btn" data-count="13">обычная</button>
         <button class="home-len-btn" data-count="21">длинная</button>
       </div>
     </div>
@@ -5086,6 +5089,7 @@
         buttonText:    'rgba(255,245,210,0.95)',
         buttonBorder:  'rgba(255,245,210,0.55)',
         buttonGlow:    'rgba(255,245,210,0.18)',
+        lenGlow:       'rgba(220,215,205,0.70)',
         accent:        '#C0BDBA',
         overlay:       'rgba(11,11,20,0.7)',
         textHi:        'rgba(248,247,245,0.90)',
@@ -5246,6 +5250,7 @@
       root.style.setProperty('--th-btn-border',  t.buttonBorder); // граница кнопок
       root.style.setProperty('--th-accent',      t.accent);       // акцент (focus-кольцо, .active)
       root.style.setProperty('--th-btn-glow',    t.buttonGlow ?? 'transparent'); // свечение кнопок (stargazer)
+      root.style.setProperty('--th-len-glow',    t.lenGlow    ?? 'transparent'); // свечение текста длины игры
       root.style.setProperty('--th-font',        t.font ?? "'Raleway', sans-serif");
       root.style.setProperty('--th-card-bg',     t.cardBg     ?? 'rgba(128,128,128,0.04)'); // фон карточек/плиток
       root.style.setProperty('--th-card-border', t.cardBorder ?? 'rgba(128,128,128,0.10)'); // граница карточек
@@ -7089,7 +7094,7 @@
               [0.50,0.90],[0.28,0.85],[0.10,0.70],[0.05,0.48],[0.08,0.28],[0.25,0.22],[0.48,0.18],
               [0.70,0.28],[0.85,0.50],[0.75,0.70],[0.55,0.80],[0.35,0.72],[0.20,0.55],[0.40,0.45]] }
     ];
-    let _homeSelectedLength = 13;
+    let _homeSelectedLength = parseInt(localStorage.getItem('homeLength') || '7');
     let _homeLengthOpen = false;
 
     function _drawLengthPreview(cv, pts) {
@@ -7157,9 +7162,14 @@
     // ── Home screen buttons ───────────────────────────────────────────────────
 
     document.getElementById('home-settings-icon').addEventListener('click', openSettingsScreen);
+    // Init active class from saved/default length
+    document.querySelectorAll('.home-len-btn').forEach(b =>
+      b.classList.toggle('active', parseInt(b.dataset.count) === _homeSelectedLength)
+    );
     document.querySelectorAll('.home-len-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         _homeSelectedLength = parseInt(btn.dataset.count);
+        localStorage.setItem('homeLength', _homeSelectedLength);
         document.querySelectorAll('.home-len-btn').forEach(b =>
           b.classList.toggle('active', b === btn)
         );
