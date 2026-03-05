@@ -2803,7 +2803,7 @@
         }, 800);
         setTimeout(() => {
           _fadeOverlay.style.opacity = '0';
-          _gameCanvas.style.transform = 'scale(0.42) translateY(-50%)';
+          _gameCanvas.style.transform = 'scale(0.42) translateY(-12%)';
         }, 1200);
         setTimeout(() => {
           const _nc = document.getElementById('name-constellation');
@@ -2818,7 +2818,7 @@
         // Победа: затемнение + уменьшение → просветление → поле имени снизу
         requestAnimationFrame(() => {
           _fadeOverlay.style.opacity = '1';
-          _gameCanvas.style.transform = 'scale(0.42) translateY(-50%)';
+          _gameCanvas.style.transform = 'scale(0.42) translateY(-12%)';
         });
         // Фаза 2: overlay исчезает — созвездие снова яркое, но маленькое
         setTimeout(() => { _fadeOverlay.style.opacity = '0'; }, 1000);
@@ -3892,7 +3892,11 @@
 
       ctx.globalAlpha = 1; // сбрасываем прозрачность перед кругами
 
-      // ── Слой 2: круги-узлы поверх кривых ────────────────────────────────────
+      // ── Слой 2: круги-узлы поверх кривых (обрезаем по границам канваса) ─────
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W, H);
+      ctx.clip();
       points.forEach((p, i) => {
         if (degree[i] === 0) return;
         const r = radii[i];
@@ -3925,6 +3929,7 @@
           ctx.fill();
         }
       });
+      ctx.restore();
 
     }
 
@@ -7252,6 +7257,14 @@
     function _detailPublishAnimation(item, onDone) {
       const VW = window.innerWidth, VH = window.innerHeight;
       const dpr = window.devicePixelRatio || 1;
+      // ── Цвета из активной темы ──────────────────────────────────────────────
+      const _pt = THEMES[activeTheme] || THEMES.stargazer;
+      const _pBg      = _pt.skyBg      || '#060612';
+      const _pStarRGB = _pt.skyStarRGB || '255,245,210';
+      const _pHaloRGB = _pt.skyBgStar  ? '255,200,120' : _pStarRGB;
+      const _pLabel   = _pt.skyLabelHL || 'rgba(255,248,235,1)';
+      const _pHasBgStars = !!_pt.skyBgStar;
+      // ───────────────────────────────────────────────────────────────────────
 
       // Compute star screen positions from the detail canvas + fit transform
       const cv   = document.getElementById('const-detail-canvas');
@@ -7298,15 +7311,15 @@
         const fa = alpha * mA; if (fa <= 0.003) return;
         const coreR = Math.max(0.5, r * 1.2), haloR = Math.max(1.5, r * 6);
         const hg = c.createRadialGradient(sx, sy, 0, sx, sy, haloR);
-        hg.addColorStop(0,    `rgba(255,200,120,${Math.min(0.72, fa * 0.55).toFixed(3)})`);
-        hg.addColorStop(0.28, `rgba(255,200,120,${(fa * 0.14).toFixed(3)})`);
-        hg.addColorStop(1,    'rgba(255,200,120,0)');
+        hg.addColorStop(0,    `rgba(${_pHaloRGB},${Math.min(0.72, fa * 0.55).toFixed(3)})`);
+        hg.addColorStop(0.28, `rgba(${_pHaloRGB},${(fa * 0.14).toFixed(3)})`);
+        hg.addColorStop(1,    `rgba(${_pHaloRGB},0)`);
         c.fillStyle = hg; c.beginPath(); c.arc(sx, sy, haloR, 0, Math.PI*2); c.fill();
         const cg = c.createRadialGradient(sx, sy, 0, sx, sy, coreR);
-        cg.addColorStop(0,    `rgba(255,245,210,${Math.min(0.95, fa * 0.95).toFixed(3)})`);
-        cg.addColorStop(0.35, `rgba(255,245,210,${(fa * 0.55).toFixed(3)})`);
-        cg.addColorStop(0.75, `rgba(255,245,210,${(fa * 0.12).toFixed(3)})`);
-        cg.addColorStop(1,    'rgba(255,245,210,0)');
+        cg.addColorStop(0,    `rgba(${_pStarRGB},${Math.min(0.95, fa * 0.95).toFixed(3)})`);
+        cg.addColorStop(0.35, `rgba(${_pStarRGB},${(fa * 0.55).toFixed(3)})`);
+        cg.addColorStop(0.75, `rgba(${_pStarRGB},${(fa * 0.12).toFixed(3)})`);
+        cg.addColorStop(1,    `rgba(${_pStarRGB},0)`);
         c.fillStyle = cg; c.beginPath(); c.arc(sx, sy, coreR, 0, Math.PI*2); c.fill();
       }
 
@@ -7330,16 +7343,18 @@
         const fadeStart = T_SHRINK + T_BLINK + T_TEXT + T_HOLD;
         const masterA   = elapsed >= fadeStart ? Math.max(0, 1 - (elapsed - fadeStart) / T_FADE) : 1;
 
-        // Starfield bg
+        // Background (theme-aware)
         const bgA = Math.min(1, elapsed / T_SKY) * masterA;
         oc.globalAlpha = bgA;
-        oc.fillStyle = '#060612'; oc.fillRect(0, 0, VW, VH);
+        oc.fillStyle = _pBg; oc.fillRect(0, 0, VW, VH);
         oc.globalAlpha = 1;
-        _bgStars.forEach(s => {
-          const sx = s.x * skyS + skyOX, sy = s.y * skyS + skyOY;
-          if (sx < -10 || sx > VW + 10 || sy < -10 || sy > VH + 10) return;
-          _drawBgStar(oc, sx, sy, Math.max(0.4, s.r * skyS * 5), s.a, bgA);
-        });
+        if (_pHasBgStars) {
+          _bgStars.forEach(s => {
+            const sx = s.x * skyS + skyOX, sy = s.y * skyS + skyOY;
+            if (sx < -10 || sx > VW + 10 || sy < -10 || sy > VH + 10) return;
+            _drawBgStar(oc, sx, sy, Math.max(0.4, s.r * skyS * 5), s.a, bgA);
+          });
+        }
 
         // Phase 1: stars fly to center
         if (elapsed < T_SHRINK) {
@@ -7362,36 +7377,36 @@
             if (starA < 0.01) return;
             const haloR = coreR * 5.5;
             const hg = oc.createRadialGradient(px, py, 0, px, py, haloR);
-            hg.addColorStop(0,    `rgba(255,200,120,${(starA * 0.48).toFixed(3)})`);
-            hg.addColorStop(0.35, `rgba(255,200,120,${(starA * 0.10).toFixed(3)})`);
-            hg.addColorStop(1,    'rgba(255,200,120,0)');
+            hg.addColorStop(0,    `rgba(${_pHaloRGB},${(starA * 0.48).toFixed(3)})`);
+            hg.addColorStop(0.35, `rgba(${_pHaloRGB},${(starA * 0.10).toFixed(3)})`);
+            hg.addColorStop(1,    `rgba(${_pHaloRGB},0)`);
             oc.fillStyle = hg; oc.beginPath(); oc.arc(px, py, haloR, 0, Math.PI*2); oc.fill();
             const cg = oc.createRadialGradient(px, py, 0, px, py, coreR);
-            cg.addColorStop(0,    `rgba(255,245,210,${(starA * 0.95).toFixed(3)})`);
-            cg.addColorStop(0.45, `rgba(255,245,210,${(starA * 0.40).toFixed(3)})`);
-            cg.addColorStop(1,    'rgba(255,245,210,0)');
+            cg.addColorStop(0,    `rgba(${_pStarRGB},${(starA * 0.95).toFixed(3)})`);
+            cg.addColorStop(0.45, `rgba(${_pStarRGB},${(starA * 0.40).toFixed(3)})`);
+            cg.addColorStop(1,    `rgba(${_pStarRGB},0)`);
             oc.fillStyle = cg; oc.beginPath(); oc.arc(px, py, coreR, 0, Math.PI*2); oc.fill();
           });
           const tLate = Math.max(0, (t - 0.6) / 0.4);
-          _drawSkyStar(oc, tX, tY, tLate * masterA, 2.5, tLate > 0.3);
+          _drawSkyStar(oc, tX, tY, tLate * masterA, 2.5, tLate > 0.3, _pStarRGB);
         }
 
         // Phase 2: blink
         if (elapsed >= T_SHRINK && elapsed < T_SHRINK + T_BLINK) {
           const blink = 0.45 + 0.55 * Math.abs(Math.sin((elapsed - T_SHRINK) / T_BLINK * Math.PI * 4));
-          _drawSkyStar(oc, tX, tY, blink * masterA, 2.5, true);
+          _drawSkyStar(oc, tX, tY, blink * masterA, 2.5, true, _pStarRGB);
         }
 
         // Phase 3-4: star + text
         if (elapsed >= T_SHRINK + T_BLINK) {
-          _drawSkyStar(oc, tX, tY, masterA, 2.5, true);
+          _drawSkyStar(oc, tX, tY, masterA, 2.5, true, _pStarRGB);
           const textA = Math.min(1, (elapsed - T_SHRINK - T_BLINK) / T_TEXT) * masterA;
           if (textA > 0.01) {
             oc.save(); oc.globalAlpha = textA;
             oc.font = '500 15px "Raleway", sans-serif';
             oc.textAlign = 'center';
-            oc.shadowColor = 'rgba(255,245,210,0.40)'; oc.shadowBlur = 14;
-            oc.fillStyle = 'rgba(255,245,210,0.92)';
+            oc.shadowColor = `rgba(${_pStarRGB},0.40)`; oc.shadowBlur = 14;
+            oc.fillStyle = _pLabel;
             oc.fillText('Опубликовано в небо ✦', tX, tY + 50);
             oc.restore();
           }
@@ -7595,20 +7610,21 @@
 
     // «Сохранить в небо ✦» — анимация + фактическое сохранение
     // Вспомогательная: рисует звезду-точку на overlay
-    function _drawSkyStar(ctx, x, y, alpha, r, withGlow) {
+    function _drawSkyStar(ctx, x, y, alpha, r, withGlow, starRGB) {
       if (alpha <= 0) return;
+      const sr = starRGB || '255,245,210';
       ctx.save();
       ctx.globalAlpha = alpha;
       if (withGlow) {
         const g = ctx.createRadialGradient(x, y, 0, x, y, r * 7);
-        g.addColorStop(0,   'rgba(255,245,210,0.95)');
-        g.addColorStop(0.25,'rgba(255,235,180,0.35)');
-        g.addColorStop(1,   'rgba(255,235,180,0)');
+        g.addColorStop(0,    `rgba(${sr},0.95)`);
+        g.addColorStop(0.25, `rgba(${sr},0.35)`);
+        g.addColorStop(1,    `rgba(${sr},0)`);
         ctx.beginPath(); ctx.arc(x, y, r * 7, 0, Math.PI * 2);
         ctx.fillStyle = g; ctx.fill();
       }
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255,250,240,1.0)';
+      ctx.fillStyle = `rgba(${sr},1.0)`;
       ctx.fill();
       ctx.restore();
     }
@@ -7621,6 +7637,15 @@
     function saveToSkyAnimation(constName, onDone) {
       const VW = window.innerWidth, VH = window.innerHeight;
       const dpr = window.devicePixelRatio || 1;
+      // ── Цвета из активной темы ──────────────────────────────────────────────
+      const _at = THEMES[activeTheme] || THEMES.stargazer;
+      const _aBg      = _at.skyBg      || '#060612';
+      const _aStarRGB = _at.skyStarRGB || '255,245,210';
+      // Тёплый янтарный ореол только для тёмной (stargazer) темы; остальные — цвет звезды
+      const _aHaloRGB = _at.skyBgStar  ? '255,200,120' : _aStarRGB;
+      const _aLabel   = _at.skyLabelHL || 'rgba(255,248,235,1)';
+      const _aHasBgStars = !!_at.skyBgStar;
+      // ───────────────────────────────────────────────────────────────────────
 
       // Снапшот игрового созвездия в экранных координатах
       const rect   = canvas.getBoundingClientRect();
@@ -7651,19 +7676,19 @@
         if (fa <= 0.003) return;
         const coreR = Math.max(0.5, r * 1.2);
         const haloR = Math.max(1.5, r * 6);
-        // Ореол — тёплый, как glowColor в игре '255,200,120'
+        // Ореол — тема: тёплый янтарь для stargazer, цвет звезды для остальных
         const hg = c.createRadialGradient(sx, sy, 0, sx, sy, haloR);
-        hg.addColorStop(0,    `rgba(255,200,120,${Math.min(0.72, fa * 0.55).toFixed(3)})`);
-        hg.addColorStop(0.28, `rgba(255,200,120,${(fa * 0.14).toFixed(3)})`);
-        hg.addColorStop(1,    'rgba(255,200,120,0)');
+        hg.addColorStop(0,    `rgba(${_aHaloRGB},${Math.min(0.72, fa * 0.55).toFixed(3)})`);
+        hg.addColorStop(0.28, `rgba(${_aHaloRGB},${(fa * 0.14).toFixed(3)})`);
+        hg.addColorStop(1,    `rgba(${_aHaloRGB},0)`);
         c.fillStyle = hg;
         c.beginPath(); c.arc(sx, sy, haloR, 0, Math.PI * 2); c.fill();
-        // Ядро — тёплый белый, как coreColor '255,245,210'
+        // Ядро — цвет звезды из темы
         const cg = c.createRadialGradient(sx, sy, 0, sx, sy, coreR);
-        cg.addColorStop(0,    `rgba(255,245,210,${Math.min(0.95, fa * 0.95).toFixed(3)})`);
-        cg.addColorStop(0.35, `rgba(255,245,210,${(fa * 0.55).toFixed(3)})`);
-        cg.addColorStop(0.75, `rgba(255,245,210,${(fa * 0.12).toFixed(3)})`);
-        cg.addColorStop(1,    'rgba(255,245,210,0)');
+        cg.addColorStop(0,    `rgba(${_aStarRGB},${Math.min(0.95, fa * 0.95).toFixed(3)})`);
+        cg.addColorStop(0.35, `rgba(${_aStarRGB},${(fa * 0.55).toFixed(3)})`);
+        cg.addColorStop(0.75, `rgba(${_aStarRGB},${(fa * 0.12).toFixed(3)})`);
+        cg.addColorStop(1,    `rgba(${_aStarRGB},0)`);
         c.fillStyle = cg;
         c.beginPath(); c.arc(sx, sy, coreR, 0, Math.PI * 2); c.fill();
       }
@@ -7699,21 +7724,24 @@
         const masterA   = elapsed >= fadeStart
           ? Math.max(0, 1 - (elapsed - fadeStart) / T_FADE) : 1;
 
-        // ── Фон: звёздное небо ──
+        // ── Фон: цвет из темы ──
         const bgA = Math.min(1, elapsed / T_SKY) * masterA;
         oc.globalAlpha = bgA;
-        oc.fillStyle = '#060612';
+        oc.fillStyle = _aBg;
         oc.fillRect(0, 0, VW, VH);
 
         oc.globalAlpha = 1;
-        _bgStars.forEach(s => {
-          const sx = s.x * skyS + skyOX;
-          const sy = s.y * skyS + skyOY;
-          if (sx < -10 || sx > VW + 10 || sy < -10 || sy > VH + 10) return;
-          // Радиус — 1/3 от игрового (игра: r*skyS*15, здесь r*skyS*5)
-          const r = Math.max(0.4, s.r * skyS * 5);
-          _drawAnimBgStar(oc, sx, sy, r, s.a, bgA);
-        });
+        // Фоновые звёзды — только для тёмных тем (skyBgStar = true)
+        if (_aHasBgStars) {
+          _bgStars.forEach(s => {
+            const sx = s.x * skyS + skyOX;
+            const sy = s.y * skyS + skyOY;
+            if (sx < -10 || sx > VW + 10 || sy < -10 || sy > VH + 10) return;
+            // Радиус — 1/3 от игрового (игра: r*skyS*15, здесь r*skyS*5)
+            const r = Math.max(0.4, s.r * skyS * 5);
+            _drawAnimBgStar(oc, sx, sy, r, s.a, bgA);
+          });
+        }
 
         // ── Фаза 1: каждая звезда летит к центру по своей дуге ──
         if (elapsed < T_SHRINK) {
@@ -7745,39 +7773,39 @@
             const coreR = Math.max(0.3, 4 * (1 - ease * 0.84));
             if (starA < 0.01) return;
 
-            // Ореол
+            // Ореол — цвет из темы
             const haloR = coreR * 5.5;
             const hg = oc.createRadialGradient(px, py, 0, px, py, haloR);
-            hg.addColorStop(0,    `rgba(255,200,120,${(starA * 0.48).toFixed(3)})`);
-            hg.addColorStop(0.35, `rgba(255,200,120,${(starA * 0.10).toFixed(3)})`);
-            hg.addColorStop(1,    'rgba(255,200,120,0)');
+            hg.addColorStop(0,    `rgba(${_aHaloRGB},${(starA * 0.48).toFixed(3)})`);
+            hg.addColorStop(0.35, `rgba(${_aHaloRGB},${(starA * 0.10).toFixed(3)})`);
+            hg.addColorStop(1,    `rgba(${_aHaloRGB},0)`);
             oc.fillStyle = hg;
             oc.beginPath(); oc.arc(px, py, haloR, 0, Math.PI * 2); oc.fill();
 
-            // Ядро
+            // Ядро — цвет из темы
             const cg = oc.createRadialGradient(px, py, 0, px, py, coreR);
-            cg.addColorStop(0,    `rgba(255,245,210,${(starA * 0.95).toFixed(3)})`);
-            cg.addColorStop(0.45, `rgba(255,245,210,${(starA * 0.40).toFixed(3)})`);
-            cg.addColorStop(1,    'rgba(255,245,210,0)');
+            cg.addColorStop(0,    `rgba(${_aStarRGB},${(starA * 0.95).toFixed(3)})`);
+            cg.addColorStop(0.45, `rgba(${_aStarRGB},${(starA * 0.40).toFixed(3)})`);
+            cg.addColorStop(1,    `rgba(${_aStarRGB},0)`);
             oc.fillStyle = cg;
             oc.beginPath(); oc.arc(px, py, coreR, 0, Math.PI * 2); oc.fill();
           });
 
           // Целевая точка появляется только в последние 40% фазы
           const tLate = Math.max(0, (t - 0.6) / 0.4);
-          _drawSkyStar(oc, tX, tY, tLate * masterA, 2.5, tLate > 0.3);
+          _drawSkyStar(oc, tX, tY, tLate * masterA, 2.5, tLate > 0.3, _aStarRGB);
         }
 
         // ── Фаза 2: точка мигает ──
         if (elapsed >= T_SHRINK && elapsed < T_SHRINK + T_BLINK) {
           const t     = (elapsed - T_SHRINK) / T_BLINK;
           const blink = 0.45 + 0.55 * Math.abs(Math.sin(t * Math.PI * 4));
-          _drawSkyStar(oc, tX, tY, blink * masterA, 2.5, true);
+          _drawSkyStar(oc, tX, tY, blink * masterA, 2.5, true, _aStarRGB);
         }
 
         // ── Фазы 3–4: звезда + текст + удержание ──
         if (elapsed >= T_SHRINK + T_BLINK) {
-          _drawSkyStar(oc, tX, tY, masterA, 2.5, true);
+          _drawSkyStar(oc, tX, tY, masterA, 2.5, true, _aStarRGB);
           const textElapsed = elapsed - T_SHRINK - T_BLINK;
           const textA = Math.min(1, textElapsed / T_TEXT) * masterA;
           if (textA > 0.01) {
@@ -7785,9 +7813,9 @@
             oc.globalAlpha = textA;
             oc.font = '500 15px "Raleway", sans-serif';
             oc.textAlign = 'center';
-            oc.shadowColor = 'rgba(255,245,210,0.40)';
+            oc.shadowColor = `rgba(${_aStarRGB},0.40)`;
             oc.shadowBlur  = 14;
-            oc.fillStyle = 'rgba(255,245,210,0.92)';
+            oc.fillStyle = _aLabel;
             oc.fillText('Созвездие сохранено ✦', tX, tY + 50);
             oc.restore();
           }
