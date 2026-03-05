@@ -2251,6 +2251,22 @@
           g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
           o.start(); o.stop(ctx.currentTime + 0.4);
         }
+        if (type === 'twinkle') {
+          // Мягкий эфирный перелив — три короткие ноты вверх
+          o.disconnect();
+          [660, 880, 1320].forEach((freq, i) => {
+            const o2 = ctx.createOscillator();
+            const g2 = ctx.createGain();
+            o2.type = 'sine';
+            o2.connect(g2); g2.connect(ctx.destination);
+            o2.frequency.value = freq;
+            g2.gain.setValueAtTime(0, ctx.currentTime + i * 0.09);
+            g2.gain.linearRampToValueAtTime(0.07, ctx.currentTime + i * 0.09 + 0.03);
+            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.18);
+            o2.start(ctx.currentTime + i * 0.09);
+            o2.stop(ctx.currentTime + i * 0.09 + 0.2);
+          });
+        }
         if (type === 'victory') {
           o.disconnect();
           [523, 659, 784, 1046].forEach((freq, i) => {
@@ -6485,6 +6501,8 @@
         return;
       }
       _skyMineIdx = (_skyMineIdx + dir + mine.length) % mine.length;
+      playSound('twinkle');
+      haptic('light');
       _skyFlyCto(mine[_skyMineIdx]);
     }
 
@@ -7289,6 +7307,7 @@
 
     document.getElementById('const-detail-publish-btn').addEventListener('click', async () => {
       if (!_detailItem || _detailItem.publishedAt) return;
+      haptic('medium');
       const pb = document.getElementById('const-detail-publish-btn');
       pb.textContent = '...'; pb.disabled = true;
 
@@ -7714,6 +7733,7 @@
       });
 
       // 3. Анимация: небо открывается, созвездие летит в точку
+      haptic('heavy');
       saveToSkyAnimation(name, async () => {
         await supabasePromise; // ждём завершения (обычно уже готово)
         saveBtn.style.display = 'none';
