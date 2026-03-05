@@ -5597,15 +5597,25 @@
     /** Points formula for a completed game. */
     function computeGamePoints({ won, myScore, opponentScore, aiLevel, gameLength }) {
       if (myScore === 0 && opponentScore === 0) return 0;
-      let base = won ? 100 : (myScore === opponentScore ? 50 : 20);
-      const total = myScore + opponentScore;
-      const efficiency = total > 0 ? myScore / total : 0.5;
-      const efficiencyBonus = Math.round(efficiency * 60);
-      const difficultyBonus = won ? (aiLevel - 1) * 25 : 0;
+      const isDraw = !won && myScore === opponentScore;
+      const isLoss = !won && !isDraw;
+
+      // Поражение → штраф (отрицательный)
+      if (isLoss) {
+        return { short: -10, normal: -8, long: -5 }[gameLength] ?? -8;
+      }
+
+      // Победа или ничья → старая формула / 10, округление вверх
+      const base           = won ? 100 : 50;
+      const total          = myScore + opponentScore;
+      const efficiency     = total > 0 ? myScore / total : 0.5;
+      const efficiencyBonus  = Math.round(efficiency * 60);
+      const difficultyBonus  = won ? (aiLevel - 1) * 25 : 0;
       const lengthMultiplier = { short: 0.7, normal: 1.0, long: 1.4 }[gameLength] || 1.0;
-      const margin = Math.max(0, myScore - opponentScore);
-      const marginBonus = Math.min(40, margin * 8);
-      return Math.round((base + efficiencyBonus + difficultyBonus + marginBonus) * lengthMultiplier);
+      const margin         = Math.max(0, myScore - opponentScore);
+      const marginBonus    = Math.min(40, margin * 8);
+      const raw = (base + efficiencyBonus + difficultyBonus + marginBonus) * lengthMultiplier;
+      return Math.ceil(raw / 10);
     }
 
     /**
@@ -5642,8 +5652,8 @@
         aiLevel: stargazerLevel, gameLength
       });
       lastRatingGain = points;
-      p.bestScore = Math.max(p.bestScore || 0, points);
-      p.rating += points;
+      if (points > 0) p.bestScore = Math.max(p.bestScore || 0, points);
+      p.rating = Math.max(0, p.rating + points);
       const info = computeRank(p.rating);
       p.rank = info.rank;
       if (p.rank > oldRank) _rankUpNewRank = info;
