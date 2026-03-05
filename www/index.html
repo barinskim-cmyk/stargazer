@@ -251,6 +251,8 @@
     }
     #canvas-area.lost #loss-content { display: flex; }
     #loss-title { font-size: 28px; font-weight: bold; opacity: 0.7; }
+    #loss-score-line { font-size: 44px; font-weight: bold; letter-spacing: 6px; }
+    #loss-names-line { font-size: 13px; opacity: 0.45; letter-spacing: 0.5px; }
     #loss-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; }
     #loss-actions button {
       width: 200px; padding: 14px 10px; border-radius: 8px; cursor: pointer;
@@ -1606,6 +1608,8 @@
       <div id="error"></div>
       <div id="loss-content">
         <div id="loss-title">Проигрыш</div>
+        <div id="loss-score-line"></div>
+        <div id="loss-names-line"></div>
         <div id="loss-actions">
           <button id="loss-play-again-btn">Играть снова</button>
           <button id="loss-to-menu-btn">Выход</button>
@@ -3022,6 +3026,9 @@
           .forEach(r => r && cancelAnimationFrame(r));
         _twinkleRaf = _gameTwinkleRaf = _chalkAnimRaf = _hintsRaf = null;
         ctx.clearRect(0, 0, W, H);
+        document.getElementById('loss-score-line').textContent = scores[0] + ' : ' + scores[1];
+        document.getElementById('loss-names-line').textContent =
+          (playerNames[0] || 'Игрок') + '  —  ' + (playerNames[1] || 'Звездочёт');
         document.getElementById('canvas-area').classList.add('lost');
         return;
       }
@@ -6004,8 +6011,13 @@
       showHomeScreen();
     }
 
-    /** Open the "Мои созвездия" screen and populate from localStorage. */
-    function openJourneyScreen() {
+    // Tracks which screen journey should return to on back-press
+    let _journeyReturnTo = 'sky-hub-screen';
+
+    /** Open the "Мои созвездия" screen and populate from localStorage.
+     *  @param {string} [returnTo='sky-hub-screen'] — element id to restore on back */
+    function openJourneyScreen(returnTo) {
+      _journeyReturnTo = returnTo || 'sky-hub-screen';
       if (_journeyRaf) { cancelAnimationFrame(_journeyRaf); _journeyRaf = null; }
       _renderJourneyGrid();
       document.getElementById('sky-hub-screen').style.display = 'none';
@@ -6235,7 +6247,10 @@
     // Journey back button (journey → sky hub)
     document.getElementById('journey-back-btn').addEventListener('click', () => {
       closeJourneyScreen();
-      document.getElementById('sky-hub-screen').style.display = 'flex';
+      const returnEl = document.getElementById(_journeyReturnTo);
+      if (returnEl) returnEl.style.display = 'flex';
+      // Restart home bg animation if returning to home screen
+      if (_journeyReturnTo === 'home-screen') _startHomeBgAnim();
     });
 
     // ── sky screen ("Общее небо") — zoomable galaxy canvas ──────────────────
@@ -7050,8 +7065,9 @@
       document.getElementById('home-rating-pts').textContent  = 'score: ' + _p.rating + ' ✦';
       document.getElementById('game').classList.remove('ui-hidden');
       document.getElementById('start').style.display = 'none';
-      fadeTo(document.getElementById('game'), document.getElementById('home-screen'));
-      _startHomeBgAnim();
+      // Pass _startHomeBgAnim as onShown callback so it runs AFTER home-screen
+      // gets display:flex — otherwise the loop's display===none check kills it instantly
+      fadeTo(document.getElementById('game'), document.getElementById('home-screen'), 300, _startHomeBgAnim);
     }
 
     // ── In-game UI toggle ─────────────────────────────────────────────────────
@@ -7446,11 +7462,10 @@
     // Back button
     document.getElementById('profile-back-btn').addEventListener('click', closeProfileScreen);
 
-    // Achievements button → open journey (achievements are in journey screen)
+    // Achievements button → open journey/achievements screen, return to home on back
     document.getElementById('profile-achievements-btn').addEventListener('click', () => {
       closeProfileScreen();
-      document.getElementById('home-screen').style.display = 'none';
-      openJourneyScreen();
+      openJourneyScreen('home-screen');
     });
 
     // Logout / Login
