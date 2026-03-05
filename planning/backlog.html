@@ -309,40 +309,21 @@
       <span class="tag tag-back">Бэк</span>
       <span class="prio prio-high">HIGH</span>
     </div>
-    <div class="item item-backlog">
-      <div class="dot"></div>
-      <div class="item-title">Supabase RLS — настроить Row Level Security на таблице constellations</div>
-      <span class="tag tag-back">Бэк</span>
-      <span class="prio prio-high">HIGH</span>
-    </div>
-    <div class="item-note">Добавить user_id UUID колонку в Supabase, создать RLS политику: INSERT/SELECT только для auth.uid() = user_id. Без этого любой может читать и писать.</div>
-  </div>
-
-  <!-- Небо: архитектура — ВЫПОЛНЕНО (требуется ручная миграция SQL) -->
+  <!-- Release -->
   <div class="section">
     <div class="section-header">
-      <div class="section-icon">🌌</div>
-      <div class="section-title">Архитектура неба на 5М+ созвездий</div>
-      <div class="section-meta">✓ реализовано — нужна SQL-миграция в Supabase</div>
+      <div class="section-icon">🚀</div>
+      <div class="section-title">Релиз</div>
+      <div class="section-meta">финальный этап</div>
     </div>
 
     <div class="item item-backlog">
       <div class="dot"></div>
-      <div class="item-title">⚠️ SQL-миграция Supabase (требует ручного запуска в Dashboard)</div>
-      <span class="tag tag-back">Бэк</span>
+      <div class="item-title">TestFlight — тест на реальном устройстве</div>
+      <span class="tag tag-manual">Вручную</span>
       <span class="prio prio-high">HIGH</span>
     </div>
-    <div class="item-note">ALTER TABLE constellations ADD COLUMN IF NOT EXISTS gx FLOAT DEFAULT random(), ADD COLUMN IF NOT EXISTS gy FLOAT DEFAULT random(); CREATE INDEX IF NOT EXISTS idx_constellations_pos ON constellations (gx, gy);</div>
-  </div>
-
-  <!-- Polish -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-icon">✨</div>
-      <div class="section-title">Полировка UI</div>
-      <div class="section-meta">до TestFlight</div>
-    </div>
-
+    <div class="item-note">Ожидание активации Apple Developer аккаунта (оплата прошла 5 мар). Далее: Xcode → Product → Archive → Distribute → TestFlight.</div>
     <div class="item item-backlog">
       <div class="dot"></div>
       <div class="item-title">Safe area отступы — все элементы в пределах скруглений экрана iPhone</div>
@@ -357,52 +338,6 @@
     </div>
     <div class="item item-backlog">
       <div class="dot"></div>
-      <div class="item-title">Звук при подмигивании звёздочек («найти мои»)</div>
-      <span class="tag tag-code">Код</span>
-      <span class="prio prio-low">LOW</span>
-    </div>
-    <div class="item item-backlog">
-      <div class="dot"></div>
-      <div class="item-title">Haptic feedback при сохранении созвездия</div>
-      <span class="tag tag-code">Код</span>
-      <span class="prio prio-low">LOW</span>
-    </div>
-  </div>
-
-  <!-- Release -->
-  <div class="section">
-    <div class="section-header">
-      <div class="section-icon">🚀</div>
-      <div class="section-title">Релиз</div>
-      <div class="section-meta">финальный этап</div>
-    </div>
-
-    <div class="item item-backlog">
-      <div class="dot"></div>
-      <div class="item-title">App Icon — все размеры (1024×1024 + производные)</div>
-      <span class="tag tag-design">Дизайн</span>
-      <span class="prio prio-high">HIGH</span>
-    </div>
-    <div class="item item-backlog">
-      <div class="dot"></div>
-      <div class="item-title">Splash screen</div>
-      <span class="tag tag-design">Дизайн</span>
-      <span class="prio prio-high">HIGH</span>
-    </div>
-    <div class="item item-backlog">
-      <div class="dot"></div>
-      <div class="item-title">Privacy Policy — опубликовать страницу (можно GitHub Pages)</div>
-      <span class="tag tag-manual">Вручную</span>
-      <span class="prio prio-high">HIGH</span>
-    </div>
-    <div class="item item-backlog">
-      <div class="dot"></div>
-      <div class="item-title">TestFlight — тест на реальном устройстве</div>
-      <span class="tag tag-manual">Вручную</span>
-      <span class="prio prio-high">HIGH</span>
-    </div>
-    <div class="item item-backlog">
-      <div class="dot"></div>
       <div class="item-title">Скриншоты для App Store (6.7", 5.5")</div>
       <span class="tag tag-manual">Вручную</span>
       <span class="prio prio-mid">MID</span>
@@ -412,6 +347,46 @@
       <div class="item-title">Сабмит в App Store</div>
       <span class="tag tag-manual">Вручную</span>
       <span class="prio prio-mid">MID</span>
+    </div>
+  </div>
+
+  <!-- Auth & Monetization -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🔐</div>
+      <div class="section-title">Авторизация и монетизация</div>
+      <div class="section-meta">не блокирует игру, но нужно до релиза</div>
+    </div>
+
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Supabase Auth — настроить Apple Sign In и Google провайдеры</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Подключить реальный Apple Sign In (сейчас — заглушка «Скоро ✦»)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">In-App Purchase — @capacitor-community/in-app-purchases или RevenueCat</div>
+      <span class="tag tag-store">App Store</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Создать consumable продукт в App Store Connect (~0.99$)</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="prio prio-high">HIGH</span>
+    </div>
+    <div class="item item-backlog">
+      <div class="dot"></div>
+      <div class="item-title">Запись созвездия в Supabase только после успешной оплаты</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="prio prio-high">HIGH</span>
     </div>
   </div>
 
@@ -758,6 +733,88 @@
     <div class="item item-done">
       <div class="check">✓</div>
       <div class="item-title">Документация обновлена: ARCHITECTURE.md, STATE.md, SCREENS.md, FUNCTIONS.md</div>
+      <span class="tag tag-arch">Архитектура</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+  </div>
+
+  <!-- Март 2026 — Инфраструктура и полировка звука/тактиля -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🛠️</div>
+      <div class="section-title">Инфраструктура, безопасность, полировка</div>
+    </div>
+    <div class="group-label">Март 2026</div>
+
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Отключена ландшафтная ориентация — только Portrait в Info.plist (iPhone + iPad)</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">App Icon — 1024×1024px, золотая 4-лучевая звезда на тёмно-синем градиенте</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Splash Screen — 2732×2732px тёмный фон + центральная золотая звезда, LaunchScreen.storyboard фон #060612</div>
+      <span class="tag tag-design">Дизайн</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Privacy Policy — опубликована на GitHub Pages (barinskim-cmyk.github.io/stargazer/privacy-policy.html)</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Git авто-синк — sync.sh, репозиторий barinskim-cmyk/stargazer, публичный</div>
+      <span class="tag tag-manual">Вручную</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">SQL-миграция Supabase — колонки gx/gy, индекс idx_constellations_pos</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Supabase RLS — Row Level Security на constellations: owner insert/update/delete/select политики с auth.uid()::text</div>
+      <span class="tag tag-back">Бэк</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Haptic feedback — medium при нажатии «Опубликовать», heavy при сохранении созвездия</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Звук при подмигивании звёздочек — playSound('twinkle'), 3-нотное арпеджио 660/880/1320 Гц</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Fix: масштаб слетал при пан/зум — отменена fly-анимация на touchstart, обновление drag reference после clamp</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">Fix: звёзды-квадратик при max zoom-out — убран clamp ячеек [0, CELLS-1], добавлен cxMin+32 cap</div>
+      <span class="tag tag-code">Код</span>
+      <span class="date">5 мар 2026</span>
+    </div>
+    <div class="item item-done">
+      <div class="check">✓</div>
+      <div class="item-title">_skyMinScale() — динамический минимальный зум, мир всегда покрывает экран без пустых краёв</div>
       <span class="tag tag-arch">Архитектура</span>
       <span class="date">5 мар 2026</span>
     </div>
