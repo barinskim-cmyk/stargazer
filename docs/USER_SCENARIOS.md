@@ -2,195 +2,216 @@
 
 ---
 
-## Сценарий 1: Первый запуск (новый пользователь)
+## Сценарий 1: Первый запуск — регистрация по email
 
 ```
 Открывает приложение
     │
+    ├─ sb.auth.getSession() → нет сессии
     ├─ localStorage.userId == null
     │
     ▼
 #auth-screen (z-index: 20)
     │
-    ├─ «Войти через Apple»  → показывает тост «Скоро!» (не реализовано)
-    ├─ «Войти через Google» → показывает тост «Скоро!» (не реализовано)
-    └─ «Продолжить без входа»
-              │
-              ├─ localStorage.guestMode = 'true'
-              ├─ localStorage.userId = 'null'
-              └─ hideAuth()
-                    │
-                    ├─ tutorial_v4_seen == null → показывает #tutorial-screen
-                    │
-                    ▼
-          #tutorial-screen (z-index: 19)
-              │
-              ├─ Фаза 1: 2 точки появляются → «Нажми на любую точку»
-              ├─ Фаза 2: Игрок выбирает точку → «Теперь нажми другую»
-              ├─ Фаза 3: Линия нарисована → «ИИ делает ход» (анимация)
-              ├─ Фаза 4-6: Замыкание фигуры → «Ты захватил область! +1»
-              └─ «Начать игру» на последнем шаге
-                    │
-                    ├─ localStorage.tutorial_v4_seen = '1'
-                    ├─ localStorage.tutorialDone = '1'
-                    └─ показывает #home-screen
+    ├─ Вводит email + пароль
+    ├─ «Зарегистрироваться» → sb.auth.signUp() → sb.auth.signInWithPassword()
+    │      └─ onAuthStateChange(SIGNED_IN) → userId = uuid, guestMode = 'false'
+    │
+    └─ hideAuth()
+          │
+          ├─ tutorial_v4_seen == null → показывает #tutorial-screen
+          │
+          ▼
+  #tutorial-screen (z-index: 19)
+      │ 4 шага с мини-игрой
+      └─ «Начать игру»
+            ├─ tutorial_v4_seen = '1'
+            └─ showHomeScreen() → #home-screen
 ```
 
 ---
 
-## Сценарий 2: Гость — играет, не сохраняет
+## Сценарий 2: Первый запуск — продолжить без входа (гость)
+
+```
+#auth-screen
+    │
+    └─ «Продолжить без входа»
+          ├─ guestMode = 'true'
+          ├─ userId = 'null'
+          └─ hideAuth() → #tutorial-screen (если tutorial_v4_seen == null)
+
+#tutorial-screen → startGame() с _tutorialMode=true (COUNT=4)
+    │
+    └─ endGame() туториальной игры
+          ├─ _tutorialAutoSave = true
+          ├─ tutorialDone = '1'
+          └─ finishEndGame()
+                │
+                ├─ applyGuestMode() → кнопок нет, «Созвездие сохранено ✦»
+                └─ _doTutorialAutoSave(winnerName)
+                      ├─ Сохраняет созвездие в localStorage (без publishedAt)
+                      └─ Переход на home через goToMenu()
+```
+
+---
+
+## Сценарий 3: Гость — играет, сохраняет в мои созвездия
 
 ```
 #home-screen
     │
-    └─ «Играть»
+    └─ «ИГРАТЬ» (13 точек, обычная)
           │
           ▼
-#start (z-index: 10)
-    │
-    ├─ «Против ИИ» → #game-length-step
-    │      └─ «Обычная» (13 точек)
-    │
-    ▼
-startGame()
-    │
-    ├─ Генерируются 13 точек
-    ├─ Появление точек (birth animation, 200 мс)
-    ├─ Игра: клики → validate() → checkScore() → draw()
-    │
-    ├─ ИИ ходит через setTimeout (800 мс задержка + _lineAnim)
-    │
-    └─ endGame() когда нет допустимых ходов
-          │
-          ├─ Победа: #victory-content появляется (opacity transition)
-          │      ├─ «Играть снова» → startGame()
-          │      └─ «← В меню» → goToMenu() → #home-screen
-          │
-          └─ Проигрыш: #canvas-area.lost
-                 ├─ «Играть снова» → startGame()
-                 ├─ «Сохранить созвездие» (только если есть линии)
-                 └─ «Выход» → goToMenu()
-
-Созвездие в режиме гостя:
-    - Кнопка «Сохранить в небо ✦» показывается, сохранение идёт в localStorage
-    - В Supabase запись НЕ делается (нет userId)
-    - Локальный прогресс (рейтинг) сохраняется в playerProgress
-    - При переустановке приложения данные теряются
-```
-
----
-
-## Сценарий 3: Зарегистрированный — играет, побеждает, сохраняет, смотрит в небе
-
-```
-#home-screen (имя настроено, ранг виден)
-    │
-    └─ «Играть» → #start → startGame() (21 точка, «длинная»)
+    startGame()
           │
           ├─ Игровой процесс...
-          │
           └─ endGame() — победа
                 │
-                ├─ progressionUpdate()
-                │      ├─ +140–250 рейтинговых очков
-                │      ├─ saveProgress()
-                │      └─ если ранг вырос → startRankUpCeremony()
-                │
-                ├─ #victory-content видим
-                └─ #name-constellation появляется (только AI, победа)
+                ├─ #victory-content (opacity 0→1)
+                └─ #name-constellation через 1.6 с
                       │
-                      ├─ Пользователь вводит «Лебедь»
+                      ├─ applyGuestMode():
+                      │     saveSkyBtn: display:none
+                      │     saveLocBtn: display:'' ← «Сохранить в мои созвездия»
                       │
-                      └─ «Сохранить в небо ✦»
-                            │
-                            ├─ Кнопка disabled
-                            ├─ flyToSkyAnimation(onDone) — 1200 мс
-                            │      └─ Созвездие уменьшается и улетает вверх
-                            │
-                            └─ onDone():
-                                  ├─ Сохранение в localStorage.saved_constellations
-                                  ├─ localStorage.lastConstellationName = 'Лебедь'
-                                  ├─ sb.from('constellations').insert({name, data})
-                                  │      └─ Ошибка Supabase → показывает сообщение пользователю
-                                  └─ Показывает «Созвездие сохранено ✦»
+                      └─ Пользователь вводит имя → «Сохранить в мои созвездия»
+                            ├─ localStorage.saved_constellations.unshift(constellation)
+                            │     (без publishedAt → в общем небе НЕ появится)
+                            ├─ «Созвездие сохранено ✦» (1.5 сек)
+                            └─ goToMenu() → #home-screen
 
-Просмотр в небе:
-    │
-    └─ goToMenu() → #home-screen
-          │
-          ├─ refreshHomeConstellations() — «Лебедь» виден в карточках
-          │
-          └─ «Общее небо» (нижняя навигация)
-                │
-                └─ openSkyScreen('global')
-                      │
-                      ├─ Загрузка из Supabase (до 100 созвездий)
-                      ├─ + локальные из localStorage (помечены isMine)
-                      │
-                      ├─ Galaxy view: «Лебедь» отображается молочно-белым (isMine)
-                      │
-                      └─ «Найти моё ✦»
-                            └─ _skyFindMine() → ищет lastConstellationName,
-                                  затем первое isMine (не первое в списке)
-                                  └─ плавный лёт + подсветка золотым (_skyHighlightId)
+Ограничения гостя:
+    ├─ Созвездия видны только локально (в #journey)
+    ├─ В общем небе (#sky-screen) не публикуются
+    └─ При переустановке приложения данные теряются
 ```
 
 ---
 
-## Сценарий 4: Просмотр общего неба — зум, поиск
+## Сценарий 4: Авторизованный — победа, сохранение в небо и локально
 
 ```
-#sky-screen открыт
+#home-screen
+    │
+    └─ «ИГРАТЬ» (21 точка, длинная)
+          │
+          ▼
+    startGame()
+          │
+          ├─ progressionUpdate()
+          │     ├─ computeGamePoints({won:true, ...}) → баллы / 10 (ceil)
+          │     ├─ saveProgress()
+          │     └─ если ранг вырос → startRankUpCeremony() → finishEndGame()
+          │
+          └─ finishEndGame() — победа
+                │
+                ├─ #name-constellation (через 1.6 сек)
+                │     applyGuestMode():
+                │       saveSkyBtn: display:''  ← «Сохранить в небо ✦»
+                │       saveLocBtn: display:''  ← «Сохранить в мои созвездия»
+                │
+                ├─ Путь A: «Сохранить в небо ✦»
+                │     ├─ constellation = { name, publishedAt, skyAddr, ... }
+                │     ├─ localStorage.saved_constellations.unshift(constellation)
+                │     ├─ sb.from('constellations').insert({name, data, user_id, gx, gy})
+                │     └─ saveToSkyAnimation(name, onDone) → goToMenu()
+                │
+                └─ Путь Б: «Сохранить в мои созвездия»
+                      ├─ constellation = { name, createdAt, skyAddr }  (без publishedAt)
+                      ├─ localStorage.saved_constellations.unshift(constellation)
+                      ├─ «Созвездие сохранено ✦» (1.5 сек)
+                      └─ goToMenu() → #home-screen
+```
+
+---
+
+## Сценарий 5: Просмотр общего неба
+
+```
+#home-screen → «Sky» → #sky-hub-screen → «Небо»
+    │
+    └─ openSkyScreen('global')
+          ├─ _skyEnsurePreStars() → 3200 декоративных звёзд (если первый открыт)
+          ├─ Supabase SELECT limit 100 → _skyData
+          ├─ + localStorage.saved_constellations с publishedAt → помечаются isMine
+          └─ _skyLoop() → рендер галактики
 
 Жесты:
-    ├─ Одиночный тач/клик — выбор/подсветка созвездия
-    ├─ Pinch (два пальца) — зум in/out
-    ├─ Drag — перемещение по галактике
-    └─ Кнопки «+» / «−» — дискретный зум
+    ├─ Тап/клик — выбор созвездия (подсветка)
+    ├─ Pinch — зум in/out
+    ├─ Drag — перемещение
+    └─ «+» / «−» — дискретный зум
 
 Режимы:
-    ├─ «Общее небо» — все созвездия (до 100 из Supabase + локальные)
+    ├─ «Общее небо» — все созвездия из Supabase + локальные опубликованные
     └─ «Моё небо» — только свои (фильтр по _mySkyNames)
 
-Цвета точек/линий:
-    ├─ Чужие — молочно-белый rgba(248,247,245,0.40)
-    ├─ Свои  — тёплый молочный rgba(255,245,228,0.75)
-    └─ Подсвеченное — золотой #FFD700
-
 «Найти моё ✦»:
-    ├─ Ищет по lastConstellationName (последнее сохранённое)
-    ├─ Если не найдено: ищет первое isMine в _skyPos
-    ├─ Если найдено: _skyZoomTo() + устанавливает _skyHighlightId
-    └─ Если не найдено: st.textContent = 'Твоих созвездий нет ✦'
+    └─ Ищет lastConstellationName → если нет → первое isMine
+         └─ _skyZoomTo() + подсветка золотым (_skyHighlightId)
 
-Закрытие:
-    └─ «←» → _skyRaf отменяется, display: none
+Закрытие: «←» → #sky-hub-screen
 ```
 
 ---
 
-## Сценарий 5: Повторный запуск (есть аккаунт / был гостем)
+## Сценарий 6: Просмотр «Мои созвездия»
+
+```
+#sky-hub-screen → «Мои созвездия»
+    │
+    └─ openJourneyScreen('sky-hub-screen')
+          ├─ _journeyReturnTo = 'sky-hub-screen'
+          └─ drawJourneyScreen() → профиль, достижения, список созвездий
+
+Тап на созвездии:
+    └─ openConstDetail(item)
+          ├─ Просмотр созвездия на canvas
+          ├─ Переименование: tap на имени → nameInput → _commitDetailRename()
+          │     ├─ Если publishedAt: sb.update().eq('name', oldName) (не upsert!)
+          │     └─ localStorage обновляется
+          └─ «← Назад» → closeConstDetail()
+
+Закрытие: «←» → #sky-hub-screen (через _journeyReturnTo)
+```
+
+---
+
+## Сценарий 7: Повторный запуск (persistent login)
 
 ```
 Открывает приложение
     │
-    ├─ localStorage.userId != null (гость или auth)
+    ├─ (async checkSession())
+    │     └─ sb.auth.getSession()
+    │           ├─ сессия жива → userId = session.user.id, guestMode='false'
+    │           │     → показывает #home-screen напрямую (auth НЕ показывается)
+    │           └─ нет сессии, нет userId → показывает #auth-screen
     │
-    └─ initAuth() — экран auth не показывается
-          │
-          ├─ tutorial_v4_seen == '1' → показывает #home-screen напрямую
-          │
-          └─ tutorial_v4_seen == null → показывает #tutorial-screen (ещё раз)
+    └─ sb.auth.onAuthStateChange() → держит токен в синхронизации
+
+Туториал не запускается если:
+    ├─ localStorage.tutorialDone === '1'
+    └─ loadProgress().rating > 0
 
 #home-screen:
     ├─ Имя из localStorage.playerName
-    ├─ Ранг из localStorage.playerProgress
-    ├─ Карточки из localStorage.saved_constellations (до 3 последних)
-    └─ Продолжает играть с накопленным прогрессом
+    ├─ Рейтинг из localStorage.playerProgress
+    └─ Фоновое созвездие из localStorage.saved_constellations
+```
 
-Примечание о гостях и созвездиях:
-    ├─ Локальные созвездия (id.startsWith('local_')) → видны в sky как свои
-    ├─ Созвездия в Supabase — публичные, без привязки к userId
-    └─ ⚠️ При переустановке приложения localStorage теряется → прогресс сбрасывается
-           Решение: реализовать Apple/Google Sign In (TODO) для привязки прогресса к аккаунту
+---
+
+## Сценарий 8: Выход из аккаунта
+
+```
+#settings-screen → «Выйти»
+    │
+    ├─ sb.auth.signOut()           ← удаляет токен из localStorage (sb-* ключи)
+    ├─ localStorage.removeItem('userId')
+    ├─ localStorage.removeItem('guestMode')
+    └─ location.reload()
+          └─ После перезагрузки → checkSession() → нет сессии → #auth-screen
 ```

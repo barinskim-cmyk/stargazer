@@ -38,7 +38,24 @@
       --th-card-border: rgba(248,247,245,0.09);
     }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100dvh; background: var(--th-bg); font-family: var(--th-font, 'Raleway', sans-serif); color: var(--th-text); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    html {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+    body {
+      margin: 0;
+      /* Fix iOS 26 WKWebView content-inset shift: lock body to full viewport */
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background: var(--th-bg);
+      font-family: var(--th-font, 'Raleway', sans-serif);
+      color: var(--th-text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
     canvas { cursor: pointer; display: block; touch-action: none; }
 
     /* ── start screen ── */
@@ -696,7 +713,7 @@
       background: var(--th-bg);
       display: flex; flex-direction: column;
       padding-top:    calc(env(safe-area-inset-top, 0px)    + 14px);
-      padding-bottom: 0;
+      padding-bottom: calc(env(safe-area-inset-bottom, 34px) + 16px);
       padding-left:   calc(env(safe-area-inset-left, 0px)   + 32px);
       padding-right:  calc(env(safe-area-inset-right, 0px)  + 32px);
       overflow: hidden;
@@ -788,10 +805,9 @@
       color: var(--th-text2);
     }
 
-    /* ── bottom: ИГРАТЬ + safe-area ── */
+    /* ── bottom: ИГРАТЬ ── */
     #home-bottom {
-      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
-      padding-top: 16px;
+      padding-top: 12px;
     }
     #home-play-btn {
       width: 100%;
@@ -1415,7 +1431,7 @@
     <div id="const-detail-info">
       <div id="const-detail-name-text"></div>
       <input id="const-detail-name-input" type="text" maxlength="32" style="display:none">
-      <div id="const-detail-name-hint">нажми, чтобы дать мне имя ✦</div>
+      <div id="const-detail-name-hint">нажми, чтобы дать мне новое имя ✦</div>
       <div id="const-detail-addr"></div>
     </div>
     <div id="const-detail-bottombar">
@@ -1810,6 +1826,7 @@
         <input id="name-const-input" type="text" placeholder="Название" maxlength="40">
         <div id="name-const-actions">
           <button id="name-const-save-btn">Сохранить в небо ✦</button>
+          <button id="name-const-local-save-btn">Сохранить в мои созвездия</button>
           <div id="name-const-guest">Войдите чтобы сохранить</div>
           <div id="name-const-saved" style="display:none;font-size:13px;color:rgba(248,247,245,0.55);text-align:center;">Созвездие сохранено ✦</div>
           <button id="name-const-again-btn">Играть снова</button>
@@ -1843,6 +1860,7 @@
   <div id="grain-overlay"></div>
 
   <script>
+
     // ── Supabase ──────────────────────────────────────────────────────────────
     const SUPABASE_URL = 'https://kugqznwvdfgojofflbgi.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_c6myYVMYUvy0JreXsk0mCQ_AIzK8w4E';
@@ -1891,7 +1909,8 @@
     document.getElementById('vsAI').addEventListener('click', () => {
       isAI = true;
       n2.style.display = 'none';
-      if (localStorage.getItem('tutorialDone') === null) {
+      const _skipTutorial = localStorage.getItem('tutorialDone') !== null || (loadProgress().rating > 0);
+      if (!_skipTutorial) {
         COUNT = 4; // tutorial: force short game
         startGame();
       } else {
@@ -2009,7 +2028,7 @@
       document.getElementById('pname1').textContent = playerNames[0];
       document.getElementById('pname2').textContent = playerNames[1];
       if (isAI) { stargazerLevel = rankToAiLevel(); }
-      if (isAI && localStorage.getItem('tutorialDone') === null) {
+      if (isAI && localStorage.getItem('tutorialDone') === null && loadProgress().rating === 0) {
         _tutorialMode = true;
         stargazerLevel = 1;
         COUNT = 4;
@@ -2158,6 +2177,7 @@
     let _probBarTarget    = 0.5; // целевое значение (к которому плавно движемся)
     let _probBarRaf       = null; // rAF handle анимации полосы вероятности
     let _tutorialMode      = false; // true during the first-game tutorial
+    let _tutorialAutoSave  = false; // set true when tutorial ends → triggers auto-save on win screen
     let _tutorialStep      = 0;     // 0=none, 1=m1 triggered, 2=m2 triggered, 3=m3 triggered
     let _tutorialTooltip   = null;  // {text,x,y,startMs,fadingOut,fadeStartMs} | null
     let _tutorialBlocked   = false; // input blocked while tooltip is visible
@@ -3225,6 +3245,7 @@
       if (_tutorialMode) {
         localStorage.setItem('tutorialDone', '1');
         _tutorialMode = false;
+        _tutorialAutoSave = true;
         if (_tutorialRaf) { cancelAnimationFrame(_tutorialRaf); _tutorialRaf = null; }
         _tutorialTooltip = null; _tutorialBlocked = false;
         document.getElementById('victory-sub').textContent = 'Первое созвездие — оно теперь твоё навсегда ✦';
@@ -3274,6 +3295,7 @@
           _nc.style.opacity = '1';
           _nc.style.pointerEvents = 'auto';
           document.getElementById('victory-actions').style.display = 'none';
+          if (_tutorialAutoSave) { _doTutorialAutoSave(_input.value.trim() || 'Моё созвездие'); }
         }, 2000);
       } else {
         // Победа: затемнение + уменьшение → просветление → поле имени снизу
@@ -3292,7 +3314,8 @@
           _nc.style.opacity = '1';
           _nc.style.pointerEvents = 'auto';
           document.getElementById('victory-actions').style.display = 'none';
-          _input.focus();
+          if (_tutorialAutoSave) { _doTutorialAutoSave(_input.value.trim() || 'Моё созвездие'); }
+          else { _input.focus(); }
         }, 1600);
       }
     }
@@ -6229,12 +6252,19 @@
     /** Open the "Мои созвездия" screen and populate from localStorage.
      *  @param {string} [returnTo='sky-hub-screen'] — element id to restore on back */
     function openJourneyScreen(returnTo) {
-      _journeyReturnTo = returnTo || 'sky-hub-screen';
+      // Guard: if called as a direct event listener, returnTo will be a MouseEvent — ignore it
+      _journeyReturnTo = (typeof returnTo === 'string' ? returnTo : null) || 'sky-hub-screen';
       if (_journeyRaf) { cancelAnimationFrame(_journeyRaf); _journeyRaf = null; }
       _renderJourneyGrid();
-      document.getElementById('sky-hub-screen').style.display = 'none';
-      const jEl = document.getElementById('journey');
-      jEl.style.display = 'flex';
+      // Hide the screen we came from (default: sky-hub-screen)
+      const fromEl = document.getElementById(_journeyReturnTo);
+      if (fromEl) fromEl.style.display = 'none';
+      // Also hide sky-hub if it's not already the returnTo (it may still be open underneath)
+      if (_journeyReturnTo !== 'sky-hub-screen') {
+        const sh = document.getElementById('sky-hub-screen');
+        if (sh) sh.style.display = 'none';
+      }
+      document.getElementById('journey').style.display = 'flex';
     }
 
     /** Close the journey screen. */
@@ -6521,8 +6551,7 @@
 
     // Journey button (start screen → journey screen)
     document.getElementById('journey-btn').addEventListener('click', () => {
-      document.getElementById('start').style.display = 'none';
-      openJourneyScreen();
+      openJourneyScreen('start');
     });
 
     // Journey back button (journey → sky hub)
@@ -6553,6 +6582,7 @@
     let _bgStars  = null; // оставляем для rank-up анимации
     const _skyBgCache = new Map(); // "cx,cy" → stars[] LRU, max 200 cells
     window._skyBgCacheRef = _skyBgCache; // регистрируем для applyTheme (без TDZ)
+    let _skyBgPreStars = null; // pre-generated fully random bg stars (replaces cell hash)
     let _mySkyNames = new Set(); // names of user's own saved constellations
 
     /**
@@ -6727,24 +6757,15 @@
       const wL = (-_skyOffX) / _skyScale - pad,  wR = (W - _skyOffX) / _skyScale + pad;
       const wT = (-_skyOffY) / _skyScale - pad,  wB = (H - _skyOffY) / _skyScale + pad;
 
-      // ── Процедурные фоновые звёзды (cell-based) ─────────────────────────
-      if (sk.skyBgStar) {
-        const cxMin = Math.floor(wL / _SKY_CELL);
-        const cxMax = Math.min(Math.ceil(wR / _SKY_CELL), cxMin + 24);
-        const cyMin = Math.floor(wT / _SKY_CELL);
-        const cyMax = Math.min(Math.ceil(wB / _SKY_CELL), cyMin + 24);
-        for (let cx = cxMin; cx <= cxMax; cx++) {
-          for (let cy = cyMin; cy <= cyMax; cy++) {
-            const stars = _skyGetCellStars(cx, cy);
-            stars.forEach(s => {
-              if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) return;
-              const { x, y } = _skyW2S(s.x, s.y);
-              const r = Math.max(0.4, Math.min(1.8, s.r));
-              ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-              ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
-            });
-          }
-        }
+      // ── Случайные фоновые звёзды (pre-generated, fully random) ──────────
+      if (sk.skyBgStar && _skyBgPreStars) {
+        _skyBgPreStars.forEach(s => {
+          if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) return;
+          const { x, y } = _skyW2S(s.x, s.y);
+          const r = Math.max(0.4, Math.min(2.0, s.r));
+          ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
+        });
       }
 
       // Highlight state
@@ -6846,24 +6867,8 @@
           const aScale = isHL ? 1.0 : isMine ? 0.80 : 0.50;
           ctx.globalAlpha = p.opacity * aScale;
 
-          const lr = sk.skyLineRGB;
+          // Only dots — no connecting lines in sky view
           if (sk.skyGlow) {
-            const lw1 = Math.max(2.0, sz * 0.038);
-            const lw2 = Math.max(0.9, sz * 0.016);
-            const lw3 = Math.max(0.4, sz * 0.005);
-            lns.forEach(([key, pl]) => {
-              if (pl !== wp) return;
-              const [a, b] = key.split('-').map(Number);
-              if (!pts[a] || !pts[b]) return;
-              const ax = mpx(pts[a]), ay = mpy(pts[a]);
-              const bx = mpx(pts[b]), by = mpy(pts[b]);
-              ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-              ctx.strokeStyle = `rgba(${lr},0.07)`; ctx.lineWidth = lw1; ctx.stroke();
-              ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-              ctx.strokeStyle = `rgba(${lr},0.18)`; ctx.lineWidth = lw2; ctx.stroke();
-              ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-              ctx.strokeStyle = `rgba(${lr},0.88)`; ctx.lineWidth = lw3; ctx.stroke();
-            });
             const _prevR = RADIUS;
             RADIUS = Math.max(1, Math.round(sz * 0.013));
             const hlBlink = isHL && _hlElapsed >= 0
@@ -6875,17 +6880,7 @@
             });
             ctx.filter = 'none'; RADIUS = _prevR;
           } else {
-            // Светлые темы: тонкие линии + точки
-            const lw = Math.max(0.8, sz * 0.012);
-            lns.forEach(([key, pl]) => {
-              if (pl !== wp) return;
-              const [a, b] = key.split('-').map(Number);
-              if (!pts[a] || !pts[b]) return;
-              const ax = mpx(pts[a]), ay = mpy(pts[a]);
-              const bx = mpx(pts[b]), by = mpy(pts[b]);
-              ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by);
-              ctx.strokeStyle = `rgba(${lr},0.70)`; ctx.lineWidth = lw; ctx.stroke();
-            });
+            // Светлые темы: только точки
             const sr = sk.skyStarRGB;
             const dotR = Math.max(1.5, sz * 0.022);
             const hlBlink = isHL && _hlElapsed >= 0
@@ -7086,6 +7081,29 @@
       _skySubscribe();
     }
 
+    /** Generate (once) a large set of fully random bg stars covering the world. */
+    function _skyEnsurePreStars() {
+      if (_skyBgPreStars) return;
+      const N = 3200; // total bg stars: ~1.8x more than current, truly random
+      _skyBgPreStars = [];
+      for (let i = 0; i < N; i++) {
+        // Vary density: 80% tiny (r 0.3-1.1), 16% medium (r 1.1-2.2), 4% bright (r 2.0-3.2)
+        const tier = Math.random();
+        const r = tier < 0.80 ? 0.3 + Math.random() * 0.8
+                : tier < 0.96 ? 1.1 + Math.random() * 1.1
+                :               2.0 + Math.random() * 1.2;
+        const a = tier < 0.80 ? 0.05 + Math.random() * 0.22
+                : tier < 0.96 ? 0.12 + Math.random() * 0.32
+                :               0.28 + Math.random() * 0.32;
+        _skyBgPreStars.push({
+          x:   Math.random() * _SKY_WORLD,
+          y:   Math.random() * _SKY_WORLD,
+          r, a,
+          col: _BG_COLORS[Math.floor(Math.random() * _BG_COLORS.length)],
+        });
+      }
+    }
+
     async function openSkyScreen(mode = 'global') {
       _skyMode = mode;
       _skyOpen = true;
@@ -7094,7 +7112,8 @@
         const saved = JSON.parse(localStorage.getItem('saved_constellations') || '[]');
         _mySkyNames = new Set(saved.map(s => s.name));
       } catch(e) { _mySkyNames = new Set(); }
-      _skyEnsureBg(); // для rank-up анимаций (не используется в skyDraw)
+      _skyEnsureBg();        // для rank-up анимаций
+      _skyEnsurePreStars();  // random bg stars for sky canvas
       document.getElementById('sky-hub-screen').style.display = 'none';
       document.getElementById('sky-screen').style.display = 'flex';
       _skyCV = document.getElementById('sky-canvas');
@@ -7455,7 +7474,7 @@
 
     // Sky hub buttons
     document.getElementById('sky-hub-back-btn').addEventListener('click', closeSkyHub);
-    document.getElementById('sky-hub-journey-btn').addEventListener('click', openJourneyScreen);
+    document.getElementById('sky-hub-journey-btn').addEventListener('click', () => openJourneyScreen('sky-hub-screen'));
     document.getElementById('sky-hub-sky-btn').addEventListener('click', () => openSkyScreen('global'));
 
     document.getElementById('home-play-btn').addEventListener('click', () => {
@@ -7622,6 +7641,7 @@
     }
     document.getElementById('settings-back-btn').addEventListener('click', () => {
       document.getElementById('settings-screen').style.display = 'none';
+      showHomeScreen();
     });
 
     // ── Profile Screen ────────────────────────────────────────────────────────
@@ -7740,9 +7760,10 @@
       _fetchLeaderboardRank();
     }
 
-    /** Close the profile screen. */
+    /** Close the profile screen, returning to home. */
     function closeProfileScreen() {
       document.getElementById('profile-screen').style.display = 'none';
+      showHomeScreen();
     }
 
     // Back button
@@ -7768,7 +7789,8 @@
         document.getElementById('home-screen').style.display = 'none';
         document.getElementById('auth-screen').style.display = 'flex';
       } else {
-        // Authenticated → sign out
+        // Authenticated → sign out (clear Supabase token + local state)
+        sb.auth.signOut().catch(() => {});
         localStorage.removeItem('userId');
         localStorage.removeItem('guestMode');
         closeProfileScreen();
@@ -8046,14 +8068,22 @@
       const nameInput = document.getElementById('const-detail-name-input');
       const newName   = nameInput.value.trim() || _detailItem.name;
       if (newName !== _detailItem.name) {
+        const oldName = _detailItem.name;
         const arr = _loadSaved();
         arr[_detailIdx].name = newName;
         if (arr[_detailIdx].publishedAt) {
           arr[_detailIdx].skyAddr = _constellationAddress(newName);
-          sb.from('constellations').upsert({ name: newName, data: arr[_detailIdx], user_id: _skyGetUserId(), gx: Math.random(), gy: Math.random() }).catch(() => {});
+          // Обновляем запись по старому имени — не создаём дубликат
+          const uid = _skyGetUserId();
+          sb.from('constellations')
+            .update({ name: newName, data: arr[_detailIdx] })
+            .eq('name', oldName)
+            .eq('user_id', uid)
+            .catch(() => {});
         }
         _persistSaved(arr);
         _detailItem = arr[_detailIdx];
+        localStorage.setItem('lastConstellationName', newName);
         _renderJourneyGrid();
       }
       nameText.textContent    = _detailItem.name;
@@ -8626,11 +8656,13 @@
       const name = nameInput.value.trim() || 'Без названия';
       const constellation = {
         name,
-        points:   points.map(p => ({ x: p.x / W, y: p.y / H })),
-        lines:    Array.from(lines.entries()),
-        polygons: polygons.map(pg => ({ path: pg.path, player: pg.player })),
+        points:    points.map(p => ({ x: p.x / W, y: p.y / H })),
+        lines:     Array.from(lines.entries()),
+        polygons:  polygons.map(pg => ({ path: pg.path, player: pg.player })),
         winner,
-        createdAt: new Date().toISOString()
+        createdAt:   new Date().toISOString(),
+        publishedAt: new Date().toISOString(),   // уже публикуется сразу
+        skyAddr:     _constellationAddress(name),
       };
       const saveBtn = document.getElementById('name-const-save-btn');
       saveBtn.disabled = true;
@@ -8704,12 +8736,88 @@
 
     // ── Auth / Tutorial screens ───────────────────────────────────────────────
 
-    /** Показывает кнопку "Сохранить" всем (гость сохраняет в localStorage). */
+    /**
+     * Настраивает кнопки победного экрана в зависимости от состояния авторизации:
+     * - tutorial auto-save: скрываем обе кнопки, показываем "Сохранено ✦"
+     * - гость: только "В мои созвездия" (без Supabase)
+     * - авторизован: обе кнопки — "В мои созвездия" и "В небо ✦"
+     *   (при "В небо" — локальное сохранение происходит автоматически)
+     */
     function applyGuestMode() {
-      document.getElementById('name-const-save-btn').style.display = '';
-      document.getElementById('name-const-guest').style.display    = 'none';
-      document.getElementById('name-const-saved').style.display    = 'none';
+      const isGuest    = localStorage.getItem('guestMode') === 'true';
+      const saveSkyBtn = document.getElementById('name-const-save-btn');
+      const saveLocBtn = document.getElementById('name-const-local-save-btn');
+      const guestDiv   = document.getElementById('name-const-guest');
+      const savedDiv   = document.getElementById('name-const-saved');
+      guestDiv.style.display = 'none';
+      if (_tutorialAutoSave) {
+        // Туториал: авто-сохранение, кнопок нет
+        saveSkyBtn.style.display = 'none';
+        saveLocBtn.style.display = 'none';
+        savedDiv.style.display   = '';
+      } else if (isGuest) {
+        // Гость: только локальное сохранение
+        saveSkyBtn.style.display = 'none';
+        saveLocBtn.style.display = '';
+        savedDiv.style.display   = 'none';
+      } else {
+        // Авторизован: обе кнопки
+        saveSkyBtn.style.display = '';
+        saveLocBtn.style.display = '';
+        savedDiv.style.display   = 'none';
+      }
     }
+
+    /** Авто-сохраняет первое созвездие туториала в localStorage. */
+    function _doTutorialAutoSave(name) {
+      if (!_tutorialAutoSave) return;
+      _tutorialAutoSave = false;
+      const constellation = {
+        name,
+        points:    points.map(p => ({ x: p.x / W, y: p.y / H })),
+        lines:     Array.from(lines.entries()),
+        polygons:  polygons.map(pg => ({ path: pg.path, player: pg.player })),
+        winner,
+        createdAt: new Date().toISOString(),
+        skyAddr:   _constellationAddress(name),
+      };
+      try {
+        const existing = JSON.parse(localStorage.getItem('saved_constellations') || '[]');
+        existing.unshift(constellation);
+        localStorage.setItem('saved_constellations', JSON.stringify(existing));
+        localStorage.setItem('lastConstellationName', name);
+      } catch(e) {}
+      playSound('twinkle');
+      haptic('medium');
+    }
+
+    // Сохранить в мои созвездия (только localStorage, без Supabase, без публикации)
+    document.getElementById('name-const-local-save-btn').addEventListener('click', () => {
+      const nameInput = document.getElementById('name-const-input');
+      const name = nameInput.value.trim() || 'Без названия';
+      const constellation = {
+        name,
+        points:    points.map(p => ({ x: p.x / W, y: p.y / H })),
+        lines:     Array.from(lines.entries()),
+        polygons:  polygons.map(pg => ({ path: pg.path, player: pg.player })),
+        winner,
+        createdAt: new Date().toISOString(),
+        skyAddr:   _constellationAddress(name),
+        // НЕТ publishedAt — созвездие не опубликовано в общем небе
+      };
+      try {
+        const existing = JSON.parse(localStorage.getItem('saved_constellations') || '[]');
+        existing.unshift(constellation);
+        localStorage.setItem('saved_constellations', JSON.stringify(existing));
+        localStorage.setItem('lastConstellationName', name);
+      } catch(e) {}
+      playSound('twinkle');
+      haptic('medium');
+      const btn = document.getElementById('name-const-local-save-btn');
+      btn.style.display = 'none';
+      document.getElementById('name-const-saved').style.display = '';
+      setTimeout(() => goToMenu(), 1500);
+    });
 
     // Установится функцией initTutorial; вызывается из initAuth после закрытия логина.
     let _proceedFromAuth = null;
@@ -8997,11 +9105,42 @@
         }, 300);
       }
 
-      // Показываем экран логина только если нет сохранённого userId
-      if (!localStorage.getItem('userId')) {
-        startScreen.style.display = 'none';
-        authScreen.style.display = 'flex';
-      }
+      // ── Persistent login: restore Supabase session on every launch ──────
+      (async function checkSession() {
+        // Fast path: guest mode saved explicitly
+        if (localStorage.getItem('guestMode') === 'true') return;
+
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session && session.user) {
+            // Valid session found — restore userId and go straight to home
+            const uid  = session.user.id;
+            const name = (session.user.email || '').split('@')[0] || 'Игрок';
+            localStorage.setItem('userId',    uid);
+            localStorage.setItem('guestMode', 'false');
+            if (!localStorage.getItem('playerName')) {
+              localStorage.setItem('playerName', name);
+            }
+            return; // auth screen stays hidden, app continues normally
+          }
+        } catch(e) {}
+
+        // No valid session → show auth only if also no userId in localStorage
+        if (!localStorage.getItem('userId')) {
+          startScreen.style.display = 'none';
+          authScreen.style.display  = 'flex';
+        }
+      })();
+
+      // Keep userId in sync when Supabase refreshes the token silently
+      sb.auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          localStorage.setItem('userId',    session.user.id);
+          localStorage.setItem('guestMode', 'false');
+        } else if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('userId');
+        }
+      });
 
       function _showComingSoon() {
         const t = document.createElement('div');

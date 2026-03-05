@@ -9,7 +9,7 @@
 | Переменная | Тип | Описание |
 |---|---|---|
 | `SUPABASE_URL` | string | URL проекта Supabase |
-| `SUPABASE_KEY` | string | Публичный (publishable) anon-ключ |
+| `SUPABASE_KEY` | string | Публичный (anon) ключ |
 | `sb` | SupabaseClient | Клиент, созданный через `createClient()` |
 
 ---
@@ -45,6 +45,7 @@
 | `isAI` | boolean | Режим: true = vs AI, false = 2 игрока |
 | `playerNames` | `string[2]` | Имена игроков |
 | `stargazerLevel` | number | Уровень сложности ИИ (1–5, зависит от ранга) |
+| `lastRatingGain` | number | Очки рейтинга за последнюю игру |
 
 ---
 
@@ -56,7 +57,6 @@
 | `selected` | number | Индекс первой выбранной точки (-1 = нет) |
 | `previewValidation` | object\|null | Результат validate() для текущего preview |
 | `lastMove` | `{a,b}`\|null | Последнее сделанное ребро |
-| `lastRatingGain` | number | Очки рейтинга за последнюю игру |
 
 ---
 
@@ -93,6 +93,7 @@
 | Переменная | Тип | Описание |
 |---|---|---|
 | `_tutorialMode` | boolean | Активен ли игровой туториал (первая игра) |
+| `_tutorialAutoSave` | boolean | Флаг: авто-сохранение первого созвездия при финише туториала |
 | `_tutorialStep` | number | Шаг: 0–3 (triggered moments) |
 | `_tutorialTooltip` | object\|null | `{text, x, y, startMs, fadingOut}` |
 | `_tutorialBlocked` | boolean | Ввод заблокирован пока виден тултип |
@@ -100,6 +101,11 @@
 | `_tutorialPulseIdx` | number | Индекс пульсирующей точки (-1 = нет) |
 | `_tutorialPolygonSeen` | boolean | Замыкание фигуры уже видели |
 | `_tutorialRaf` | number\|null | RAF тултип-оверлея |
+
+**Логика `_tutorialAutoSave`:**
+- Устанавливается в `true` в конце туториальной игры (когда `_tutorialMode` становится `false`)
+- `applyGuestMode()` проверяет флаг и скрывает обе кнопки сохранения, показывает «Созвездие сохранено ✦»
+- `_doTutorialAutoSave(name)` сохраняет созвездие в localStorage без `publishedAt` и сбрасывает флаг
 
 ---
 
@@ -133,13 +139,13 @@
 | `COLOR` | string | Цвет линий (из THEMES[active].lines) |
 | `PREVIEW` | string | Цвет preview-линии |
 | `FILL` | string | Цвет заливки захваченных областей |
-| `THEMES` | object | Объект всех тем (см. ниже) |
+| `THEMES` | object | Объект всех тем |
 
 #### THEMES.stargazer (основная)
 | Поле | Значение | Назначение |
 |---|---|---|
 | `background` | `#0b0b14` | Фон canvas |
-| `dots` | `rgba(255,255,255,0.95)` | Цвет точек (нестарgazer-рендер) |
+| `dots` | `rgba(255,255,255,0.95)` | Цвет точек |
 | `lines` | `rgba(255,240,210,0.88)` | Цвет линий → COLOR |
 | `preview` | `rgba(240,224,195,0.22)` | Цвет preview → PREVIEW |
 | `captured` | `rgba(255,235,200,0.10)` | Цвет заливки → FILL |
@@ -147,7 +153,6 @@
 | `buttonBorder` | `rgba(210,185,140,0.5)` | CSS var --th-btn-border |
 | `buttonGlow` | `rgba(205,175,130,0.40)` | CSS var --th-btn-glow |
 | `accent` | `#C09358` | CSS var --th-accent |
-| `textHi/textLo/textMid` | milky rgba | Canvas-текст (legacy) |
 | `vignette` | 0.45 | Непрозрачность виньетки |
 
 ---
@@ -165,7 +170,7 @@
 
 ### Sky Hub Screen
 
-Промежуточный экран-хаб между #home-screen и подэкранами (#journey, #sky-screen).
+Промежуточный экран-хаб между `#home-screen` и подэкранами (`#journey`, `#sky-screen`).
 Не имеет собственных RAF-циклов — управляется только show/hide через display.
 
 ---
@@ -183,12 +188,14 @@
 | `_skyRaf` | number\|null | RAF основного рендера |
 | `_skyAnimRaf` | number\|null | RAF анимаций (зум/лёт) |
 | `_skyChannel` | object\|null | Supabase Realtime channel (отписка при закрытии) |
-| `_bgStars` | object[] | ~800 фоновых звёзд `{x, y, r, a, col}` |
+| `_skyBgPreStars` | object[]\|null | 3200 pre-generated случайных фоновых звёзд `{x,y,r,a,col}` |
 | `_SKY_WORLD` | 3000 | Размер виртуального мира галактики (px) |
 | `_mySkyNames` | Set\<string\> | Имена созвездий текущего игрока |
 | `_skyDrag` | object\|null | Состояние перетаскивания `{startX, startY, ox, oy}` |
 | `_skyPinch` | object\|null | Состояние pinch-зума `{dist, scale}` |
 | `_skyOpen` | boolean | Флаг: sky-screen сейчас открыт (останавливает RAF при false) |
+
+**Фоновые звёзды неба:** `_skyBgPreStars` генерируются один раз при первом открытии экрана через `_skyEnsurePreStars()`. 3200 звёзд с тремя тирами по яркости/размеру, случайные координаты. В sky view отображаются только точки (без линий созвездий) — LOD уровень галактики.
 
 ---
 
@@ -197,21 +204,24 @@
 | Переменная | Тип | Описание |
 |---|---|---|
 | `_journeyRaf` | number\|null | RAF рендера экрана |
+| `_journeyReturnTo` | string\|null | ID экрана для возврата при закрытии journey (строка, например `'sky-hub-screen'` или `'start'`) |
 | `_journeyTooltip` | `{idx}`\|null | Индекс ачивки с тултипом |
 | `_journeyJustOpened` | number | performance.now() при открытии (для pulse) |
+
+**Важно:** `_journeyReturnTo` всегда строка (ID DOM-элемента). `openJourneyScreen(returnTo)` проверяет `typeof returnTo === 'string'` чтобы не принять MouseEvent.
 
 ---
 
 ### Settings Screen
 
 Нет собственных переменных состояния. Настройки хранятся в `localStorage.app_settings`
-и читаются через `window._appSettings` (объект, инициализированный до загрузки DOM).
+и читаются через `window._appSettings`.
 
 | Ключ в `app_settings` | Тип | Описание |
 |---|---|---|
 | `sound` | boolean | Включены ли звуки (Web Audio) |
 | `vibration` | boolean | Включена ли вибрация (Capacitor Haptics) |
-| `starGlow` | `'all'` \| `'active'` | Режим звёздного свечения: все точки или только активные |
+| `starGlow` | `'all'` \| `'active'` | Режим звёздного свечения |
 
 ---
 
@@ -220,16 +230,18 @@
 | Ключ | Тип значения | Описание |
 |---|---|---|
 | `userId` | string | UUID пользователя, `'null'` для гостя |
-| `guestMode` | `'true'` | Установлен если пропущен auth |
+| `guestMode` | `'true'` \| `'false'` | Установлен если пропущен auth |
 | `playerName` | string | Отображаемое имя игрока |
 | `theme` | `'stargazer'` \| `'minimal'` \| `'suprematist'` \| `'chalk'` | Активная тема |
 | `hintsEnabled` | `'0'` \| `'1'` | Включены ли подсказки |
-| `app_settings` | JSON string | `{ sound, vibration, starGlow }` — системные настройки |
-| `tutorialDone` | `'1'` | Первая игра завершена (старый флаг) |
-| `tutorial_v4_seen` | `'1'` | Новый туториал v4 показан |
+| `app_settings` | JSON string | `{ sound, vibration, starGlow }` |
+| `tutorialDone` | `'1'` | Первая игра (vs AI) завершена |
+| `tutorial_v4_seen` | `'1'` | Экран туториала v4 показан |
 | `playerProgress` | JSON string | Объект прогресса (см. ниже) |
 | `saved_constellations` | JSON string | Массив сохранённых созвездий |
 | `lastConstellationName` | string | Имя последнего сохранённого созвездия |
+| `avatarType` | string | Тип аватара: `'emoji'` \| `'letter'` |
+| `avatarValue` | string | Значение аватара (emoji или буква) |
 
 #### Схема `playerProgress`
 ```json
@@ -253,14 +265,18 @@
 ```json
 {
   "name": "Лебедь",
-  "points": [{"x": 0.12, "y": 0.34}, ...],
-  "lines": [["0-2", 0], ["2-5", 1], ...],
+  "points": [{"x": 0.12, "y": 0.34}],
+  "lines": [["0-2", 0], ["2-5", 1]],
   "polygons": [{"path": [0,2,5], "player": 0}],
   "winner": 0,
-  "savedAt": "2025-01-15T10:30:00.000Z"
+  "createdAt": "2025-01-15T10:30:00.000Z",
+  "publishedAt": "2025-01-15T10:30:00.000Z",
+  "skyAddr": "лебедь"
 }
 ```
-Координаты points нормализованы: x/W, y/H (0..1).
+- `publishedAt` присутствует только если созвездие опубликовано в общее небо
+- `skyAddr` — нормализованный slug (lowercase, без пробелов) для поиска в небе
+- Координаты `points` нормализованы: x/W, y/H (0..1)
 
 ---
 
@@ -271,29 +287,24 @@
 | Колонка | Тип | Описание |
 |---|---|---|
 | `id` | uuid | Primary key (auto) |
-| `name` | text | Название созвездия (введённое игроком) |
-| `data` | jsonb | Полные данные игры |
+| `name` | text | Название созвездия |
+| `data` | jsonb | Полные данные (points, lines, polygons, winner, createdAt, publishedAt, skyAddr) |
+| `user_id` | uuid\|null | UUID пользователя (null для анонимных) |
+| `gx` | float | Случайная позиция X в мире галактики (0..1) |
+| `gy` | float | Случайная позиция Y в мире галактики (0..1) |
 | `created_at` | timestamptz | Время сохранения |
-
-#### Схема `data` (jsonb)
-```json
-{
-  "points":   [{"x": 0.12, "y": 0.34}],
-  "lines":    [["0-2", 0], ["2-5", 1]],
-  "polygons": [{"path": [0,2,5], "player": 0}],
-  "winner":   0
-}
-```
 
 ### Запросы
 
 | Операция | Когда | Код |
 |---|---|---|
-| SELECT | `openSkyScreen()` | `sb.from('constellations').select('id,name,data,created_at').order('created_at', {ascending:false}).limit(100)` |
-| INSERT | После `flyToSkyAnimation()` | `sb.from('constellations').insert({name, data: constellation})` |
+| SELECT | `openSkyScreen()` | `sb.from('constellations').select('id,name,data,created_at').order('created_at',{ascending:false}).limit(100)` |
+| INSERT | После `saveToSkyAnimation()` (авторизованный) | `sb.from('constellations').insert({name, data, user_id, gx, gy})` |
+| UPDATE | При переименовании опубликованного | `sb.from('constellations').update({name, data}).eq('name', oldName).eq('user_id', uid)` |
+| REALTIME | `openSkyScreen()` | Подписка на INSERT — автоматическое добавление новых созвездий |
 
 ### Примечание о безопасности
-Используется публичный (anon) ключ. Row Level Security (RLS) не настроен явно в коде. Все созвездия публичные, без привязки к userId в Supabase.
+Используется публичный (anon) ключ. Данные публичные. Связь с пользователем через `user_id` (не принудительно через RLS).
 
 ---
 

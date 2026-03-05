@@ -1,5 +1,10 @@
 {
   "appId": "com.masha.stargazer",
   "appName": "stargazer",
-  "webDir": "www"
+  "webDir": "www",
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false,
+    "limitsNavigationsToAppBoundDomains": false
+  }
 }
