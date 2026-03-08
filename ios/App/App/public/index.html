@@ -461,8 +461,8 @@
 
     /* ── Global: overflow prevention and protective margins ── */
 
-    /* Nothing overflows the viewport */
-    * { max-width: 100%; }
+    /* Prevent content overflow — scoped to actual content containers */
+    img, video, canvas, svg, table, pre { max-width: 100%; }
 
     /* All buttons: theme-aware */
     button:not(.theme-btn) {
@@ -529,20 +529,20 @@
       box-sizing: border-box; width: 100%;
     }
 
-    /* ── Minimal UI: hide non-essential elements ── */
-    .start-step > p,
-    .sub,
-    #journey-btn,
-    .hints-toggle,
-    #vsHuman,
-    #p1level, #p1-rank-stars,
-    #p2level, #ai-level-stars,
-    #bottom-panel,
-    #victory-rating,
-    #change-rank-btn,
-    .theme-btn,
-    .start-themes,
-    #theme-switcher { display: none !important; }
+    /* ── Minimal UI: hide non-essential elements (scoped to .minimal-ui on body) ── */
+    body.minimal-ui .start-step > p,
+    body.minimal-ui .sub,
+    body.minimal-ui #journey-btn,
+    body.minimal-ui .hints-toggle,
+    body.minimal-ui #vsHuman,
+    body.minimal-ui #p1level, body.minimal-ui #p1-rank-stars,
+    body.minimal-ui #p2level, body.minimal-ui #ai-level-stars,
+    body.minimal-ui #bottom-panel,
+    body.minimal-ui #victory-rating,
+    body.minimal-ui #change-rank-btn,
+    body.minimal-ui .theme-btn,
+    body.minimal-ui .start-themes,
+    body.minimal-ui #theme-switcher { display: none; }
 
     /* ── global vignette overlay ── */
     #vignette-overlay {
@@ -1409,7 +1409,7 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
-<body>
+<body class="minimal-ui">
 
   <!-- Offline indicator banner (shown when navigator.onLine = false) -->
   <div id="offline-banner" aria-live="polite">✦ offline</div>
@@ -1997,8 +1997,8 @@
       if (startBottom) startBottom.style.display = id === 'game-mode-step' ? 'flex' : 'none';
     }
 
-    var LEVEL_NAMES = AI_LEVEL_I18N[_lang] || AI_LEVEL_I18N.en;
-    function _refreshLevelNames() { LEVEL_NAMES = AI_LEVEL_I18N[_lang] || AI_LEVEL_I18N.en; }
+    // LEVEL_NAMES and _refreshLevelNames() are defined in systems/i18n.js
+    // and exposed on window — no need to redeclare here.
     var stargazerLevel = 1;
 
     // Step 1 — С другом / Со Звездочётом
@@ -2205,8 +2205,22 @@
       if (typeof draw === 'function' && points.length > 0 && !gameOver) draw();
     }
 
-    window.addEventListener('resize', resizeCanvas);
-    window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 100));
+    // Use ResizeObserver for accurate resize detection (no setTimeout hacks).
+    // Falls back to window resize + orientationchange if unavailable.
+    if (typeof ResizeObserver !== 'undefined') {
+      var _resizeObs = new ResizeObserver(function() {
+        var areaEl = document.getElementById('canvas-area');
+        // Skip if game area is hidden (clientWidth=0) — resize will fire on show
+        if (areaEl && areaEl.clientWidth > 0) resizeCanvas();
+      });
+      var _obsTarget = document.getElementById('canvas-area');
+      if (_obsTarget) _resizeObs.observe(_obsTarget);
+      // orientationchange still needed on iOS — ResizeObserver may lag behind
+      window.addEventListener('orientationchange', function() { setTimeout(resizeCanvas, 100); });
+    } else {
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('orientationchange', function() { setTimeout(resizeCanvas, 100); });
+    }
 
 
     var points = []; // filled in startGame()
@@ -2292,7 +2306,7 @@
           o.start(); o.stop(ctx.currentTime + 0.4);
         }
         if (type === 'victory') {
-          o.disconnect();
+          o.disconnect(); g.disconnect(); // stop unused initial nodes
           [523, 659, 784, 1046].forEach((freq, i) => {
             const o2 = ctx.createOscillator();
             const g2 = ctx.createGain();
@@ -2307,7 +2321,7 @@
         }
         if (type === 'twinkle') {
           // Мягкий эфирный перелив — три короткие ноты вверх при сохранении созвездия
-          o.disconnect();
+          o.disconnect(); g.disconnect();
           [660, 880, 1320].forEach((freq, i) => {
             const o2 = ctx.createOscillator();
             const g2 = ctx.createGain();
@@ -3173,56 +3187,41 @@
     //              Клик в пустоту: сбрасывает selected.
 
     /**
-     * Обработчик движения мыши по canvas.
-     * Вычисляет ближайшую точку к курсору в радиусе RADIUS+8 пикселей.
-     * Если точка изменилась — пересчитывает previewValidation и перерисовывает поле.
-     * previewValidation кэшируется здесь, а не в draw(), чтобы не вызывать
-     * validate() на каждый кадр при неподвижном курсоре.
+     * Unified pointer handler: replaces separate mousemove + touchstart.
+     * Pointer Events work for both mouse (hover) and touch (finger down/move).
+     * Finds nearest point within HIT_R, updates preview validation and redraws.
      */
-    canvas.addEventListener('mousemove', e => {
+    canvas.addEventListener('pointermove', e => {
       if (gameOver) return;
       const [mx, my] = _evXY(e, canvas);
       const prev = hovered;
-      // Ищем точку в радиусе RADIUS+8 (увеличенная зона захвата для удобства)
       hovered = points.findIndex(p => Math.hypot(p.x - mx, p.y - my) <= HIT_R);
       if (hovered !== prev) {
-        // Обновляем превью валидации только если есть выбранная точка и новая цель
         previewValidation = (selected !== -1 && hovered !== -1 && hovered !== selected)
           ? validate(selected, hovered) : null;
         draw();
       }
     });
 
-    /**
-     * Обработчик ухода курсора за границу canvas.
-     * Сбрасывает hovered и previevValidation — убирает подсветку и пунктирную линию.
-     */
-    canvas.addEventListener('mouseleave', () => {
+    /** Pointer leaves canvas — clear hover preview. */
+    canvas.addEventListener('pointerleave', () => {
       if (gameOver) return;
       hovered = -1; previewValidation = null; draw();
     });
 
-    // Touch support for mobile
-    canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      if (gameOver) return;
-      const t = e.touches[0];
-      const r = canvas.getBoundingClientRect();
-      const mx = t.clientX - r.left, my = t.clientY - r.top;
-      const prev = hovered;
-      hovered = points.findIndex(p => Math.hypot(p.x - mx, p.y - my) <= HIT_R);
-      if (hovered !== prev) {
-        previewValidation = (selected !== -1 && hovered !== -1 && hovered !== selected)
-          ? validate(selected, hovered) : null;
-        draw();
+    /**
+     * Touch → click bridge: on touch pointerup, dispatch a synthetic click
+     * so the click handler (which implements move logic) fires.
+     * Mouse clicks go through naturally — no bridge needed.
+     */
+    canvas.addEventListener('pointerup', e => {
+      if (e.pointerType === 'touch') {
+        e.preventDefault();
+        canvas.dispatchEvent(new MouseEvent('click', {
+          clientX: e.clientX, clientY: e.clientY, bubbles: true
+        }));
       }
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', e => {
-      e.preventDefault();
-      const t = e.changedTouches[0];
-      canvas.dispatchEvent(new MouseEvent('click', { clientX: t.clientX, clientY: t.clientY, bubbles: true }));
-    }, { passive: false });
+    });
 
     /**
      * Обработчик клика по canvas — основная логика ввода хода игрока.
@@ -3709,8 +3708,11 @@
     // ── In-game UI toggle ─────────────────────────────────────────────────────
     document.getElementById('ui-toggle-btn').addEventListener('click', () => {
       document.getElementById('game').classList.toggle('ui-hidden');
-      // Wait for panels to fully render before measuring their height
-      requestAnimationFrame(() => setTimeout(resizeCanvas, 80));
+      // ResizeObserver handles the canvas resize automatically when panels
+      // appear/disappear; manual call only needed as fallback.
+      if (typeof ResizeObserver === 'undefined') {
+        requestAnimationFrame(function() { setTimeout(resizeCanvas, 80); });
+      }
     });
 
     // ← Меню (in-game top panel)
@@ -4144,11 +4146,19 @@
 
     // ── Offline mode system ────────────────────────────────────────────────────
 
+    /** Generate a simple UUID v4 for idempotency keys. */
+    function _uuid4() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0;
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+      });
+    }
+
     /** Add a failed sky save to the local queue for later sync. */
     function _queueSkySave(payload) {
       try {
         const q = JSON.parse(localStorage.getItem('sky_save_queue') || '[]');
-        q.push({ ...payload, _ts: Date.now() });
+        q.push({ ...payload, _ts: Date.now(), _idempotencyKey: _uuid4() });
         localStorage.setItem('sky_save_queue', JSON.stringify(q));
         _updateQueueBadge();
       } catch(e) {}
@@ -4169,23 +4179,32 @@
       } catch(e) {}
     }
 
-    /** Sync queued sky saves to Supabase when back online. */
+    /** Sync queued sky saves to Supabase one-by-one when back online. */
     async function _syncOfflineQueue() {
       try {
         const q = JSON.parse(localStorage.getItem('sky_save_queue') || '[]');
         if (!q.length) return;
         const uid = _skyGetUserId();
-        const toSync = q.map(item => ({
-          name: item.name,
-          data: item.data,
-          user_id: uid || item.user_id,
-          gx: item.gx || Math.random(),
-          gy: item.gy || Math.random(),
-        }));
-        const { error } = await sb.from('constellations').insert(toSync);
-        if (!error) {
-          localStorage.removeItem('sky_save_queue');
-          _updateQueueBadge();
+        const remaining = [];
+        for (const item of q) {
+          const row = {
+            name: item.name,
+            data: item.data,
+            user_id: uid || item.user_id,
+            gx: item.gx || Math.random(),
+            gy: item.gy || Math.random(),
+            idempotency_key: item._idempotencyKey || _uuid4(),
+          };
+          // upsert on idempotency_key prevents duplicates on retry
+          const { error } = await sb.from('constellations')
+            .upsert(row, { onConflict: 'idempotency_key' });
+          if (error) {
+            remaining.push(item); // keep failed items for next retry
+          }
+        }
+        localStorage.setItem('sky_save_queue', JSON.stringify(remaining));
+        _updateQueueBadge();
+        if (remaining.length === 0) {
           showToast('✦ ' + t('victory_saved'));
         }
       } catch(e) {}

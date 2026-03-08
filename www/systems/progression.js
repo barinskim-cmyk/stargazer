@@ -18,45 +18,53 @@
 
   // ── rank definitions ──────────────────────────────────────────────────────
 
-  /** Rank definitions: 10 ranks with slow progression. */
+  /**
+   * Rank definitions: 10 ranks with slow progression.
+   * Names are NOT stored here — use getRankName(rank) from i18n.js
+   * which reads RANK_NAMES_I18N for the current language.
+   */
   var RANKS = [
-    { rank: 1,  threshold: 0,     name: 'Наблюдатель' },
-    { rank: 2,  threshold: 500,   name: 'Картограф' },
-    { rank: 3,  threshold: 1200,  name: 'Следопыт' },
-    { rank: 4,  threshold: 2500,  name: 'Путешественник' },
-    { rank: 5,  threshold: 4500,  name: 'Хранитель' },
-    { rank: 6,  threshold: 7500,  name: 'Звездочёт' },
-    { rank: 7,  threshold: 12000, name: 'Навигатор' },
-    { rank: 8,  threshold: 18000, name: 'Астроном' },
-    { rank: 9,  threshold: 26000, name: 'Страж Неба' },
-    { rank: 10, threshold: 36000, name: 'Архитектор Созвездий' }
+    { rank: 1,  threshold: 0 },
+    { rank: 2,  threshold: 500 },
+    { rank: 3,  threshold: 1200 },
+    { rank: 4,  threshold: 2500 },
+    { rank: 5,  threshold: 4500 },
+    { rank: 6,  threshold: 7500 },
+    { rank: 7,  threshold: 12000 },
+    { rank: 8,  threshold: 18000 },
+    { rank: 9,  threshold: 26000 },
+    { rank: 10, threshold: 36000 }
   ];
 
   var RANK_THRESHOLDS = RANKS.map(function(r) { return r.threshold; });
 
   // ── achievements ──────────────────────────────────────────────────────────
 
+  /**
+   * Achievement definitions: only id and cat are used at runtime.
+   * Labels/descriptions come from ACHIEVEMENT_I18N in i18n.js via getAchI18n().
+   */
   var ACHIEVEMENTS = [
-    // ── Победы ──────────────────────────────────────────────────────
-    { id: 'first_win',    icon: '✦',  label: 'Первое\nсозвездие',    desc: 'Выиграй первую партию',                        cat: 'win'   },
-    { id: 'win10',        icon: '⭐', label: 'Охотник',               desc: 'Одержи 10 побед',                              cat: 'win'   },
-    { id: 'streak3',      icon: '💫', label: 'Три\nподряд',           desc: 'Выиграй 3 партии подряд',                      cat: 'win'   },
-    { id: 'streak5',      icon: '☄️', label: 'Пять\nзвёзд',           desc: 'Выиграй 5 партий подряд',                      cat: 'win'   },
-    { id: 'perfect',      icon: '🔭', label: 'Идеальная\nпартия',    desc: 'Победи, не дав сопернику ни одной линии',      cat: 'win'   },
-    { id: 'long_win',     icon: '🌠', label: 'Долгий\nпуть',          desc: 'Победи в длинной партии (21 точка)',           cat: 'win'   },
-    // ── Исследование ────────────────────────────────────────────────
-    { id: 'games10',      icon: '🌙', label: 'Путник',                desc: 'Сыграй 10 партий',                             cat: 'play'  },
-    { id: 'games50',      icon: '🌌', label: 'Странник',              desc: 'Сыграй 50 партий',                             cat: 'play'  },
-    // ── Небо ────────────────────────────────────────────────────────
-    { id: 'sky5',         icon: '🌟', label: 'Небесная\nколлекция',   desc: 'Сохрани 5 созвездий в своё небо',              cat: 'sky'   },
-    // ── Темы ────────────────────────────────────────────────────────
-    { id: 'stargazer5',   icon: '🌑', label: 'Ночной\nнаблюдатель',  desc: 'Сыграй 5 партий в теме Stargazer',             cat: 'theme' },
-    { id: 'chalk10',      icon: '✏',  label: 'Мастер\nчернил',       desc: 'Сыграй 10 партий в теме Chalk',                cat: 'theme' },
-    { id: 'suprematist5', icon: '◻',  label: 'Супрематист',           desc: 'Сыграй 5 партий в теме Suprematist',          cat: 'theme' },
-    // ── Ранги ───────────────────────────────────────────────────────
-    { id: 'rank3',        icon: '✦',  label: 'Следопыт',              desc: 'Достигни ранга Следопыт (ранг 3)',             cat: 'rank'  },
-    { id: 'rank5',        icon: '✦',  label: 'Хранитель',             desc: 'Достигни ранга Хранитель (ранг 5)',            cat: 'rank'  },
-    { id: 'legend',       icon: '👑', label: 'Архитектор\nСозвездий', desc: 'Достигни высшего ранга — Архитектор Созвездий', cat: 'rank'  },
+    // ── Wins ──
+    { id: 'first_win',    cat: 'win'   },
+    { id: 'win10',        cat: 'win'   },
+    { id: 'streak3',      cat: 'win'   },
+    { id: 'streak5',      cat: 'win'   },
+    { id: 'perfect',      cat: 'win'   },
+    { id: 'long_win',     cat: 'win'   },
+    // ── Exploration ──
+    { id: 'games10',      cat: 'play'  },
+    { id: 'games50',      cat: 'play'  },
+    // ── Sky ──
+    { id: 'sky5',         cat: 'sky'   },
+    // ── Themes ──
+    { id: 'stargazer5',   cat: 'theme' },
+    { id: 'chalk10',      cat: 'theme' },
+    { id: 'suprematist5', cat: 'theme' },
+    // ── Ranks ──
+    { id: 'rank3',        cat: 'rank'  },
+    { id: 'rank5',        cat: 'rank'  },
+    { id: 'legend',       cat: 'rank'  },
   ];
 
   // ── mutable state ─────────────────────────────────────────────────────────

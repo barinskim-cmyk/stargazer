@@ -4,7 +4,7 @@ Architecture reference for the modular structure of Stargazer (iOS Capacitor gam
 
 **Date:** March 2026
 **Total modules:** 21 (4 systems + 7 engines + 10 screens)
-**index.html:** 4,228 lines (HTML/CSS + game core logic)
+**index.html:** 4,247 lines (HTML/CSS + game core logic)
 **Total extracted:** ~7,220 lines across 21 modules
 
 ---
@@ -13,7 +13,7 @@ Architecture reference for the modular structure of Stargazer (iOS Capacitor gam
 
 ```
 www/
-  index.html              — HTML, CSS, canvas init, game loop, touch handlers
+  index.html              — HTML, CSS, canvas init, game loop, pointer handlers
   systems/                — Infrastructure (load first)
     config.js             — Supabase URL/key, environment config
     layout-config.js      — DPR, canvas sizing
@@ -493,6 +493,17 @@ Content that stays in index.html due to tight coupling with game canvas state:
 - **Unified applyMove:** Click handler delegates to `applyMove()` instead of duplicating its logic. AI trigger (`setTimeout(makeAIMove, 800)`) moved into `applyMove()` — single source of truth for all move application (human + AI)
 - **resetGameState():** `startGame()` calls `resetGameState()` from game-engine.js instead of manual 11-line duplicate reset
 - **Dead code removed:** `drawProbBar()` (70 lines, never called), `_probBarRaf` (always null). Probability bar uses DOM element with CSS transition only
+
+### Quality refactoring round 2 (March 2026)
+
+- **Minimal UI CSS:** Replaced global `display: none !important` with scoped `body.minimal-ui` class — no more `!important`, elements only hidden when class is present
+- **i18n cleanup:** Removed duplicate `LEVEL_NAMES` / `_refreshLevelNames()` from index.html (already provided by i18n.js)
+- **Idempotent offline queue:** Each queued save gets a UUID `_idempotencyKey`; `_syncOfflineQueue()` now syncs per-item via `upsert(onConflict: 'idempotency_key')` — no duplicates on retry
+- **RANKS/ACHIEVEMENTS cleanup:** Removed hardcoded Russian `name`/`label`/`desc` fields from progression.js — only `id`, `cat`, `threshold` remain; display names come from i18n.js
+- **ResizeObserver:** Canvas resize uses `ResizeObserver` on `#canvas-area` (falls back to `window.resize` if unavailable), eliminating most `setTimeout(resizeCanvas)` hacks
+- **Pointer Events:** Replaced separate `mousemove`/`touchstart`/`touchend` handlers with unified `pointermove`/`pointerleave`/`pointerup`
+- **CSS/audio fixes:** Scoped `* { max-width }` to specific elements; fixed oscillator leak in `playSound()` for victory/twinkle types
+- **Supabase RLS:** Documented required Row Level Security policies in config.js
 - **Config extracted:** Supabase URL/key moved from inline `<script>` to `systems/config.js`
 
 ---
