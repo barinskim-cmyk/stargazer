@@ -1955,6 +1955,7 @@
   <script src="engines/game-engine.js"></script>
   <script src="engines/stargazer-ai.js"></script>
   <script src="engines/sky-screen.js"></script>
+  <script src="engines/audio.js"></script>
   <!-- Supabase client (before screens that depend on it) -->
   <script>
     var sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_KEY);
@@ -1970,6 +1971,7 @@
   <script src="screens/journey-screen.js"></script>
   <script src="screens/constellation-detail.js"></script>
   <script src="screens/home-screen.js"></script>
+  <script src="systems/offline-queue.js"></script>
 
   <script>
 
@@ -2266,77 +2268,7 @@
      * @param {number} b — индекс второй точки
      */
 
-    // ── Web Audio звуки ───────────────────────────────────────────────────────
-    //
-    // Все звуки синтезируются через Web Audio API (без файлов), что позволяет
-    // обойтись без сетевых запросов и избежать проблем с автовоспроизведением.
-    // AudioContext создаётся лениво при первом вызове — браузеры требуют
-    // пользовательского жеста (tap/click) для разблокировки аудио.
-    //
-    // Типы звуков:
-    //   'connect' — короткий восходящий тон при соединении двух точек
-    //   'score'   — протяжный аккорд при захвате области
-    //   'victory' — восходящая арпеджированная последовательность при победе
-    let _audioCtx = null;
-    /**
-     * Воспроизводит синтезированный звуковой эффект через Web Audio API.
-     * Ничего не делает, если звук отключён в настройках или AudioContext недоступен.
-     * @param {'connect'|'score'|'victory'} type — тип звука
-     */
-    function playSound(type) {
-      if (!window._appSettings.sound) return;
-      try {
-        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const ctx = _audioCtx;
-        const o = ctx.createOscillator();
-        const g = ctx.createGain();
-        o.connect(g); g.connect(ctx.destination);
-
-        if (type === 'connect') {
-          o.frequency.setValueAtTime(440, ctx.currentTime);
-          o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-          g.gain.setValueAtTime(0.1, ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
-          o.start(); o.stop(ctx.currentTime + 0.2);
-        }
-        if (type === 'score') {
-          o.frequency.setValueAtTime(523, ctx.currentTime);
-          g.gain.setValueAtTime(0.15, ctx.currentTime);
-          g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-          o.start(); o.stop(ctx.currentTime + 0.4);
-        }
-        if (type === 'victory') {
-          o.disconnect(); g.disconnect(); // stop unused initial nodes
-          [523, 659, 784, 1046].forEach((freq, i) => {
-            const o2 = ctx.createOscillator();
-            const g2 = ctx.createGain();
-            o2.connect(g2); g2.connect(ctx.destination);
-            o2.frequency.value = freq;
-            g2.gain.setValueAtTime(0, ctx.currentTime + i * 0.15);
-            g2.gain.linearRampToValueAtTime(0.15, ctx.currentTime + i * 0.15 + 0.05);
-            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
-            o2.start(ctx.currentTime + i * 0.15);
-            o2.stop(ctx.currentTime + i * 0.15 + 0.3);
-          });
-        }
-        if (type === 'twinkle') {
-          // Мягкий эфирный перелив — три короткие ноты вверх при сохранении созвездия
-          o.disconnect(); g.disconnect();
-          [660, 880, 1320].forEach((freq, i) => {
-            const o2 = ctx.createOscillator();
-            const g2 = ctx.createGain();
-            o2.type = 'sine';
-            o2.connect(g2); g2.connect(ctx.destination);
-            o2.frequency.value = freq;
-            g2.gain.setValueAtTime(0, ctx.currentTime + i * 0.09);
-            g2.gain.linearRampToValueAtTime(0.07, ctx.currentTime + i * 0.09 + 0.03);
-            g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.18);
-            o2.start(ctx.currentTime + i * 0.09);
-            o2.stop(ctx.currentTime + i * 0.09 + 0.2);
-          });
-        }
-      } catch(e) {}
-    }
+    // playSound() — extracted to engines/audio.js
 
     function applyMove(a, b) {
       playSound('connect');
@@ -4135,101 +4067,7 @@
 
     // ── Offline mode system ────────────────────────────────────────────────────
 
-    /** Generate a simple UUID v4 for idempotency keys. */
-    function _uuid4() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0;
-        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-      });
-    }
-
-    /** Add a failed sky save to the local queue for later sync. */
-    function _queueSkySave(payload) {
-      try {
-        const q = JSON.parse(localStorage.getItem('sky_save_queue') || '[]');
-        q.push({ ...payload, _ts: Date.now(), _idempotencyKey: _uuid4() });
-        localStorage.setItem('sky_save_queue', JSON.stringify(q));
-        _updateQueueBadge();
-      } catch(e) {}
-    }
-
-    /** Update the pending-sync badge count. */
-    function _updateQueueBadge() {
-      try {
-        const badge = document.getElementById('offline-queue-badge');
-        if (!badge) return;
-        const q = JSON.parse(localStorage.getItem('sky_save_queue') || '[]');
-        if (q.length > 0) {
-          badge.textContent = q.length + ' ' + t('offline_queue');
-          badge.style.display = 'block';
-        } else {
-          badge.style.display = 'none';
-        }
-      } catch(e) {}
-    }
-
-    /** Sync queued sky saves to Supabase one-by-one when back online. */
-    async function _syncOfflineQueue() {
-      try {
-        const q = JSON.parse(localStorage.getItem('sky_save_queue') || '[]');
-        if (!q.length) return;
-        const uid = _skyGetUserId();
-        const remaining = [];
-        for (const item of q) {
-          const row = {
-            name: item.name,
-            data: item.data,
-            user_id: uid || item.user_id,
-            gx: item.gx || Math.random(),
-            gy: item.gy || Math.random(),
-            idempotency_key: item._idempotencyKey || _uuid4(),
-          };
-          // upsert on idempotency_key prevents duplicates on retry
-          const { error } = await sb.from('constellations')
-            .upsert(row, { onConflict: 'idempotency_key' });
-          if (error) {
-            remaining.push(item); // keep failed items for next retry
-          }
-        }
-        localStorage.setItem('sky_save_queue', JSON.stringify(remaining));
-        _updateQueueBadge();
-        if (remaining.length === 0) {
-          showToast('✦ ' + t('victory_saved'));
-        }
-      } catch(e) {}
-    }
-
-    /** Toggle the offline banner and react to network changes. */
-    function _onNetworkChange(isOnline) {
-      const banner = document.getElementById('offline-banner');
-      if (banner) {
-        banner.textContent = t('offline_banner');
-        banner.classList.toggle('visible', !isOnline);
-      }
-      if (isOnline) {
-        // Back online — sync queued saves
-        _syncOfflineQueue();
-      }
-    }
-
-    // Initialise banner text from current lang
-    (function _initOfflineBanner() {
-      const banner = document.getElementById('offline-banner');
-      if (!banner) return;
-      banner.textContent = t('offline_banner');
-      if (!navigator.onLine) banner.classList.add('visible');
-    })();
-
-    // Show queue badge if there are pending saves
-    _updateQueueBadge();
-
-    // Listen for network changes
-    window.addEventListener('online',  () => _onNetworkChange(true));
-    window.addEventListener('offline', () => _onNetworkChange(false));
-
-    // Also update banner text when language changes (patch _applyLang)
-    const _origApplyLang = _applyLang;
-    // (offline_banner text node is updated by _onNetworkChange which reads t())
+    // Offline queue system — extracted to systems/offline-queue.js
 
   </script>
 </body>
