@@ -906,4 +906,5 @@
   window._skyGetUserId       = _skyGetUserId;
   window._skyEnsureBg        = _skyEnsureBg;
   window._skyHash            = _skyHash;
+  window._SKY_WORLD          = _SKY_WORLD;
 })();
