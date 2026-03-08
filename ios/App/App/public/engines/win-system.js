@@ -190,8 +190,12 @@
         _fadeOverlay.style.opacity = '1';
         _gameCanvas.style.transform = 'scale(0.42) translateY(-12%)';
       });
-      // Фаза 2: overlay исчезает — созвездие снова яркое, но маленькое
-      setTimeout(function () { _fadeOverlay.style.opacity = '0'; }, 1000);
+      // Фаза 2: overlay исчезает, заголовок появляется
+      setTimeout(function () {
+        _fadeOverlay.style.opacity = '0';
+        _vc.style.opacity = '1';
+        _vc.style.pointerEvents = 'auto';
+      }, 1000);
       // Фаза 3: появляется поле для имени под созвездием
       setTimeout(function () {
         var _nc = document.getElementById('name-constellation');
