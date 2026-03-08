@@ -1966,6 +1966,7 @@
   <script src="screens/profile-screen.js"></script>
   <script src="screens/auth-screen.js"></script>
   <script src="screens/tutorial-screen.js"></script>
+  <script src="screens/sky-hub-screen.js"></script>
 
   <script>
 
@@ -4503,18 +4504,6 @@
      * Открывает экран-хаб «Sky» из главного меню.
      * Останавливает фоновую анимацию созвездия на home-screen чтобы не тратить RAF.
      */
-    function openSkyHub() {
-      _stopHomeBgAnim();
-      document.getElementById('home-screen').style.display = 'none';
-      document.getElementById('sky-hub-screen').style.display = 'flex';
-      try { window.scrollTo(0, 0); } catch(e) {}
-    }
-
-    /** Закрывает sky-hub, возвращает на главный экран (запускает фоновую анимацию). */
-    function closeSkyHub() {
-      document.getElementById('sky-hub-screen').style.display = 'none';
-      showHomeScreen();
-    }
 
     // Tracks which screen journey should return to on back-press
     let _journeyReturnTo = 'sky-hub-screen';
@@ -5125,12 +5114,6 @@
         );
       });
     });
-    document.getElementById('home-sky-nav-btn').addEventListener('click', openSkyHub);
-
-    // Sky hub buttons
-    document.getElementById('sky-hub-back-btn').addEventListener('click', closeSkyHub);
-    document.getElementById('sky-hub-journey-btn').addEventListener('click', () => openJourneyScreen('sky-hub-screen'));
-    document.getElementById('sky-hub-sky-btn').addEventListener('click', () => openSkyScreen('global'));
 
     document.getElementById('home-play-btn').addEventListener('click', () => {
       COUNT = _homeSelectedLength;
