@@ -2017,7 +2017,7 @@
 
     // LEVEL_NAMES and _refreshLevelNames() are defined in systems/i18n.js
     // and exposed on window — no need to redeclare here.
-    var stargazerLevel = 1;
+    var stargazerLevel = { rank: 1, subRank: 3, step: 1, smartProb: 0.07, firstMoveSmart: false };
 
     // Step 1 — С другом / Со Звездочётом
     document.getElementById('vsHuman').addEventListener('click', () => {
@@ -2139,7 +2139,7 @@
       if (isAI) { stargazerLevel = rankToAiLevel(); }
       if (isAI && localStorage.getItem('tutorialDone') === null && loadProgress().rating === 0) {
         _tutorialMode = true;
-        stargazerLevel = 1;
+        stargazerLevel = { rank: 1, subRank: 3, step: 1, smartProb: 0.07, firstMoveSmart: false };
         COUNT = 4;
       }
       const lvlEl = document.getElementById('p2level');
@@ -2147,8 +2147,11 @@
       const p1lvlEl = document.getElementById('p1level');
       const p1starsEl = document.getElementById('p1-rank-stars');
       if (isAI) {
-        if (lvlEl)    { lvlEl.textContent   = LEVEL_NAMES[stargazerLevel - 1]; lvlEl.style.display   = 'block'; }
-        if (starsEl)  { starsEl.textContent = '★'.repeat(stargazerLevel);       starsEl.style.display = 'block'; }
+        var _aiRank = stargazerLevel.rank || 1;
+        var _aiSub  = stargazerLevel.subRank || 3;
+        var _aiName = (LEVEL_NAMES[_aiRank - 1] || LEVEL_NAMES[0]) + ' ' + ['','I','II','III'][_aiSub];
+        if (lvlEl)    { lvlEl.textContent   = _aiName; lvlEl.style.display   = 'block'; }
+        if (starsEl)  { starsEl.textContent = '\u2726'.repeat(_aiRank); starsEl.style.display = 'block'; }
         if (p1lvlEl)  p1lvlEl.style.display  = 'block';
         if (p1starsEl) p1starsEl.style.display = 'block';
       } else {
