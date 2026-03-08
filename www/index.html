@@ -3209,19 +3209,8 @@
       hovered = -1; previewValidation = null; draw();
     });
 
-    /**
-     * Touch → click bridge: on touch pointerup, dispatch a synthetic click
-     * so the click handler (which implements move logic) fires.
-     * Mouse clicks go through naturally — no bridge needed.
-     */
-    canvas.addEventListener('pointerup', e => {
-      if (e.pointerType === 'touch') {
-        e.preventDefault();
-        canvas.dispatchEvent(new MouseEvent('click', {
-          clientX: e.clientX, clientY: e.clientY, bubbles: true
-        }));
-      }
-    });
+    // No pointerup→click bridge needed: with touch-action:none on canvas,
+    // the browser fires a native click after tap without the 300ms delay.
 
     /**
      * Обработчик клика по canvas — основная логика ввода хода игрока.
