@@ -907,4 +907,10 @@
   window._skyEnsureBg        = _skyEnsureBg;
   window._skyHash            = _skyHash;
   window._SKY_WORLD          = _SKY_WORLD;
+  // _bgStars инициализируется как null, заполняется при _skyEnsureBg() —
+  // нужен getter чтобы index.html видел актуальное значение
+  Object.defineProperty(window, '_bgStars', {
+    get: function() { return _bgStars; },
+    configurable: true
+  });
 })();
