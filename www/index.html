@@ -2230,7 +2230,7 @@
       H = Math.min(availH, LC.MAX_H);
 
       // Set canvas buffer to physical pixel dimensions for sharp Retina rendering
-      LC.setupCanvas(canvas, W, H);
+      LC.sizeCanvas(canvas, W, H);
 
       var _p = LC.proportional(Math.min(W, H));
       RADIUS   = _p.radius;
@@ -4205,7 +4205,7 @@
         const pw = scr.offsetWidth || window.innerWidth;
         const ph = scr.offsetHeight || window.innerHeight;
         if (cv.width !== Math.round(pw * LC.dpr())) {
-          LC.setupCanvas(cv, pw, ph);
+          LC.sizeCanvas(cv, pw, ph);
         }
         const ctx2 = cv.getContext('2d');
         const dpr  = LC.dpr();
@@ -4642,7 +4642,7 @@
         const data = ACH_CONSTELLATIONS[cat];
         const cssW = canvas.offsetWidth || scrollW;
         const cssH = data.height;
-        LC.setupCanvas(canvas, cssW, cssH);
+        LC.sizeCanvas(canvas, cssW, cssH);
 
         // Replace previous click listener with fresh one
         const newCanvas = canvas.cloneNode(false);

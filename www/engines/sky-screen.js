@@ -903,4 +903,7 @@
   window._skyShowOfflineUI   = _skyShowOfflineUI;
   window._skyFindMine        = _skyFindMine;
   window._skyBgCacheRef      = _skyBgCache;
+  window._skyGetUserId       = _skyGetUserId;
+  window._skyEnsureBg        = _skyEnsureBg;
+  window._skyHash            = _skyHash;
 })();

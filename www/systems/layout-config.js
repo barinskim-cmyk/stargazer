@@ -111,15 +111,14 @@
   }
 
   /**
-   * Настраивает canvas БЕЗ установки style (для случаев, когда CSS-размер
-   * уже задан или вычисляется отдельно).
+   * Устанавливает только физ. размеры canvas (без transform и без style).
+   * Для случаев, когда код сам управляет ctx.scale/setTransform.
    */
-  function scaleCanvas(el, cssW, cssH) {
+  function sizeCanvas(el, cssW, cssH) {
     el.width  = Math.round(cssW * _dpr);
     el.height = Math.round(cssH * _dpr);
-    var ctx = el.getContext('2d');
-    ctx.setTransform(_dpr, 0, 0, _dpr, 0, 0);
-    return ctx;
+    el.style.width  = cssW + 'px';
+    el.style.height = cssH + 'px';
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -176,7 +175,7 @@
     safeAreas:      safeAreas,
     readSafeAreas:  readSafeAreas,
     setupCanvas:    setupCanvas,
-    scaleCanvas:    scaleCanvas,
+    sizeCanvas:     sizeCanvas,
     proportional:   proportional,
     applyCSS:       applyCSS,
     PAD_S:  PAD_S,
