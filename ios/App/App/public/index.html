@@ -1947,6 +1947,7 @@
   <script src="systems/layout-config.js"></script>
   <script src="systems/i18n.js"></script>
   <script src="systems/progression.js"></script>
+  <script src="systems/config.js"></script>
   <script src="engines/star-renderer.js"></script>
   <script src="engines/line-renderer.js"></script>
   <script src="engines/themes.js"></script>
@@ -1956,10 +1957,7 @@
   <script src="engines/sky-screen.js"></script>
   <!-- Supabase client (before screens that depend on it) -->
   <script>
-    var sb = supabase.createClient(
-      'https://kugqznwvdfgojofflbgi.supabase.co',
-      'sb_publishable_c6myYVMYUvy0JreXsk0mCQ_AIzK8w4E'
-    );
+    var sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_KEY);
     var _proceedFromAuth = null;
   </script>
   <!-- screens -->
@@ -2085,19 +2083,9 @@
       playerNames[0] = localStorage.getItem('playerName') || t('player_default');
       playerNames[1] = isAI ? t('ai_name') : (n2.value.trim() || t('player_2'));
       // Полный сброс игрового состояния перед новой партией
-      points.length = 0;
-      lines.clear();
-      polygons.length = 0;
-      scoredKeys.clear();
-      scores[0] = 0; scores[1] = 0;
-      currentPlayer = 0;
-      gameOver = false; winner = -1;
-      lastMove = null;
-      previewValidation = null;
-      hovered = -1; selected = -1;
-      _isGameOverCache = null;
+      resetGameState();
       _winProb = 0.5; _probBarDisplay = 0.5; _probBarTarget = 0.5;
-      if (_probBarRaf) { cancelAnimationFrame(_probBarRaf); _probBarRaf = null; }
+      // (prob bar uses CSS transition, no RAF to cancel)
       const _pbWrap = document.getElementById('prob-bar-wrap');
       const _pbFill = document.getElementById('prob-bar-fill');
       if (_pbWrap && _pbFill) { _pbWrap.classList.add('active'); _pbFill.style.width = '50%'; }
@@ -2235,7 +2223,7 @@
     var _winProb          = 0.5; // оценочная вероятность победы игрока 0 (0.0–1.0)
     var _probBarDisplay   = 0.5; // текущее анимированное значение полосы
     var _probBarTarget    = 0.5; // целевое значение (к которому плавно движемся)
-    var _probBarRaf       = null; // rAF handle анимации полосы вероятности
+    // (_probBarRaf removed — prob bar uses CSS transition, not RAF)
     var _tutorialMode      = false; // true during the first-game tutorial
     let _tutorialAutoSave  = false; // set true when tutorial ends → triggers auto-save on win screen
     let _tutorialStep      = 0;     // 0=none, 1=m1 triggered, 2=m2 triggered, 3=m3 triggered
@@ -2350,11 +2338,15 @@
         currentPlayer = 1 - currentPlayer;
         _isGameOverCache = null;
         updateUI(); updateLastMoveBtn();
+        checkTutorialMoments();
+        computeHints();
         if (isGameOver()) { endGame(); return; }
         _probBarTarget = estimateWinProbability();
         startProbBarAnim();
-        checkTutorialMoments();
-        computeHints();
+        if (isAI && currentPlayer === 1) {
+          if (_tutorialMode) document.getElementById('turn-display').textContent = t('ai_thinking');
+          setTimeout(makeAIMove, 800);
+        }
       }, 200);
     }
 
@@ -3100,87 +3092,10 @@
     }
 
     /**
-     * Рисует полосу вероятности победы в верхней части игрового canvas.
-     * Stargazer: тонкая линия-дорожка + скользящая светящаяся точка на позиции split.
-     * Остальные темы: двухцветная полоска в цветах темы (accent слева, мuted справа).
-     */
-    function drawProbBar() {
-      const barW  = W * 0.90;
-      const barX  = (W - barW) / 2;
-      const barY  = 10;
-      const p0    = Math.max(0, Math.min(1, _probBarDisplay));
-      const split = barX + barW * p0;
-      const t     = T();
-
-      ctx.save();
-
-      if (activeTheme === 'stargazer') {
-        // ── Stargazer: одна линия + скользящая светящаяся точка ──
-        const midY = barY + 4;
-
-        // Дорожка (едва заметная тонкая линия)
-        ctx.fillStyle = 'rgba(248,247,245,0.09)';
-        ctx.fillRect(barX, midY - 0.75, barW, 1.5);
-
-        // Внешнее мягкое свечение точки
-        const glow = ctx.createRadialGradient(split, midY, 0, split, midY, 16);
-        glow.addColorStop(0, 'rgba(225,223,220,0.38)');
-        glow.addColorStop(1, 'rgba(225,223,220,0)');
-        ctx.fillStyle = glow;
-        ctx.fillRect(split - 16, midY - 16, 32, 32);
-
-        // Среднее кольцо
-        const mid = ctx.createRadialGradient(split, midY, 0, split, midY, 5.5);
-        mid.addColorStop(0,   'rgba(248,247,245,0.95)');
-        mid.addColorStop(0.45,'rgba(225,223,220,0.65)');
-        mid.addColorStop(1,   'rgba(225,223,220,0)');
-        ctx.fillStyle = mid;
-        ctx.beginPath();
-        ctx.arc(split, midY, 5.5, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Яркое ядро
-        ctx.beginPath();
-        ctx.arc(split, midY, 2, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(248,247,245,0.96)';
-        ctx.fill();
-
-      } else {
-        // ── Остальные темы: двухцветная полоска в цветах темы ──
-        const barH  = 5;
-        const r     = 2.5;
-        const accentRaw = t.accent || t.lines;
-
-        // Правая дорожка (игрок 1, мuted)
-        _rrect(ctx, barX, barY, barW, barH, r);
-        ctx.fillStyle = 'rgba(128,128,128,0.14)';
-        ctx.fill();
-
-        // Левый сегмент (игрок 0, цвет акцента темы)
-        if (p0 > 0.01) {
-          _rrect(ctx, barX, barY, barW * p0, barH, r);
-          ctx.fillStyle = accentRaw;
-          ctx.globalAlpha = 0.72;
-          ctx.fill();
-          ctx.globalAlpha = 1;
-        }
-
-        // Маркер на границе раздела
-        ctx.beginPath();
-        ctx.arc(split, barY + barH / 2, 3, 0, Math.PI * 2);
-        ctx.fillStyle = accentRaw;
-        ctx.fill();
-      }
-
-      ctx.restore();
-    }
-
-    /**
-     * Запускает плавную анимацию полосы вероятности к _probBarTarget.
-     * Каждый кадр: display += (target − display) × 0.06.
+     * Обновляет позицию DOM-полосы вероятности (#prob-bar-fill).
+     * Анимация выполняется через CSS transition (width 0.4s ease-out).
      */
     function startProbBarAnim() {
-      if (_probBarRaf) { cancelAnimationFrame(_probBarRaf); _probBarRaf = null; }
       _probBarDisplay = _probBarTarget;
       const fill = document.getElementById('prob-bar-fill');
       if (fill) fill.style.width = (_probBarTarget * 100).toFixed(1) + '%';
@@ -3293,8 +3208,7 @@
       if (gameOver) return;
       const t = e.touches[0];
       const r = canvas.getBoundingClientRect();
-      const sx = canvas.width / r.width, sy = canvas.height / r.height;
-      const mx = (t.clientX - r.left) * sx, my = (t.clientY - r.top) * sy;
+      const mx = t.clientX - r.left, my = t.clientY - r.top;
       const prev = hovered;
       hovered = points.findIndex(p => Math.hypot(p.x - mx, p.y - my) <= HIT_R);
       if (hovered !== prev) {
@@ -3370,29 +3284,10 @@
         if (!v.ok) {
           showError(v.reason); // показываем причину отказа
         } else {
-          // Ход валиден — анимируем линию, затем применяем
+          // Ход валиден — применяем через единственный путь applyMove
           const _sa = selected, _sb = i;
           clearError(); selected = -1; previewValidation = null;
-          _lineAnimating = true;
-          _lineAnim = { a: _sa, b: _sb, player: currentPlayer, startT: performance.now() };
-          _startLineAnimLoop();
-          setTimeout(() => {
-            _lineAnim = null; _lineAnimating = false;
-            lastMove = { a: _sa, b: _sb };
-            lines.set(lineKey(_sa, _sb), currentPlayer);
-            checkScore(_sa, _sb, currentPlayer);
-            currentPlayer = 1 - currentPlayer;
-            _isGameOverCache = null;
-            updateUI(); updateLastMoveBtn();
-            checkTutorialMoments();
-            computeHints();
-            if (isGameOver()) { endGame(); return; }
-            _probBarTarget = estimateWinProbability(); startProbBarAnim();
-            if (isAI && currentPlayer === 1) {
-              if (_tutorialMode) document.getElementById('turn-display').textContent = t('ai_thinking');
-              setTimeout(makeAIMove, 800);
-            }
-          }, 200);
+          applyMove(_sa, _sb);
         }
       }
       draw();
@@ -3781,10 +3676,10 @@
     function goToMenu() {
       // Reset any scroll drift (iOS WKWebView can accumulate offset despite overflow:hidden)
       try { window.scrollTo(0, 0); } catch(e) {}
-      [_twinkleRaf, _gameTwinkleRaf, _chalkAnimRaf, _probBarRaf,
+      [_twinkleRaf, _gameTwinkleRaf, _chalkAnimRaf,
        _hintsRaf, _rankUpRaf, _tutorialRaf, lastMoveAnimRaf, _lineAnimRaf, _winParticleRaf, _pointBirthRaf]
         .forEach(r => r && cancelAnimationFrame(r));
-      _twinkleRaf = _gameTwinkleRaf = _chalkAnimRaf = _probBarRaf =
+      _twinkleRaf = _gameTwinkleRaf = _chalkAnimRaf =
         _hintsRaf = _rankUpRaf = _tutorialRaf = lastMoveAnimRaf = _lineAnimRaf = _winParticleRaf = _pointBirthRaf = null;
       _pointBirthT = [];
       const _pcanvas = document.getElementById('particle-canvas');
