@@ -643,7 +643,7 @@
     _startHomeBgAnim();
     document.getElementById('home-screen').style.display = 'flex';
     document.getElementById('start').style.display = 'none';
-    try { window.scrollTo(0, 0); } catch(e) {}
+    if (typeof _resetZoom === 'function') _resetZoom();
   }
 
   // ── Home screen: length picker ────────────────────────────────────────────

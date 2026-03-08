@@ -167,13 +167,13 @@
     document.getElementById('const-detail-confirm-bar').style.display = 'none';
     document.getElementById('const-detail-bottombar').style.display   = 'flex';
     document.getElementById('const-detail-screen').style.display = 'flex';
-    try { window.scrollTo(0, 0); } catch(e) {}
+    if (typeof _resetZoom === 'function') _resetZoom();
   }
 
   function closeConstDetail() {
     if (_detailRaf) { cancelAnimationFrame(_detailRaf); _detailRaf = null; }
     document.getElementById('const-detail-screen').style.display = 'none';
-    try { window.scrollTo(0, 0); } catch(e) {}
+    if (typeof _resetZoom === 'function') _resetZoom();
   }
 
   document.getElementById('const-detail-back-btn').addEventListener('click', closeConstDetail);
@@ -406,7 +406,7 @@
         ov.style.display = 'none';
         ov.style.width = '';
         ov.style.height = '';
-        try { window.scrollTo(0, 0); } catch(e) {}
+        if (typeof _resetZoom === 'function') _resetZoom();
         onDone();
       }
     }

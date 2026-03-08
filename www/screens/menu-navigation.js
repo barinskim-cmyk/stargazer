@@ -22,8 +22,8 @@
    * скрывает игровой экран, возвращает стартовый экран на первый шаг.
    */
   function goToMenu() {
-    // Reset any scroll drift (iOS WKWebView can accumulate offset despite overflow:hidden)
-    try { window.scrollTo(0, 0); } catch(e) {}
+    // Reset pinch-zoom + scroll drift
+    if (typeof _resetZoom === 'function') _resetZoom();
     [_twinkleRaf, _gameTwinkleRaf, _chalkAnimRaf,
      _hintsRaf, _rankUpRaf, _tutorialRaf, lastMoveAnimRaf, _lineAnimRaf, _winParticleRaf, _pointBirthRaf]
       .forEach(function (r) { if (r) cancelAnimationFrame(r); });
@@ -45,7 +45,7 @@
     document.getElementById('start').style.display = 'none';
     fadeTo(document.getElementById('game'), document.getElementById('home-screen'), 300, function () {
       _startHomeBgAnim();
-      try { window.scrollTo(0, 0); } catch(e) {}
+      if (typeof _resetZoom === 'function') _resetZoom();
     });
   }
 
@@ -53,6 +53,7 @@
    * Universal screen transition: fade hideEl out, then fade showEl in.
    */
   function fadeTo(hideEl, showEl, duration, onShown) {
+    if (typeof _resetZoom === 'function') _resetZoom();
     if (duration === undefined) duration = 300;
     hideEl.style.transition = 'opacity ' + duration + 'ms';
     hideEl.style.opacity = '0';

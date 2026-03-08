@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <script>
     // Глобальные настройки — читаем сразу, до загрузки остального JS
     window._appSettings = Object.assign(
@@ -17,6 +17,15 @@
           await Capacitor.Plugins.Haptics.impact({ style: style.toUpperCase() });
         }
       } catch(e) {}
+    }
+
+    /** Reset pinch-zoom to 1× — iOS WKWebView may ignore user-scalable=no */
+    function _resetZoom() {
+      try { window.scrollTo(0, 0); } catch(e) {}
+      var vp = document.querySelector('meta[name="viewport"]');
+      if (vp) {
+        vp.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover');
+      }
     }
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300&display=swap" rel="stylesheet">

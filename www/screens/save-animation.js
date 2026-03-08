@@ -218,7 +218,7 @@
         ov.style.display = 'none';
         ov.style.width = '';
         ov.style.height = '';
-        try { window.scrollTo(0, 0); } catch(e) {}
+        if (typeof _resetZoom === 'function') _resetZoom();
         onDone();
       }
     }
