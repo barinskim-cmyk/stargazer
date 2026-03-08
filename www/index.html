@@ -1956,6 +1956,8 @@
   <script src="engines/stargazer-ai.js"></script>
   <script src="engines/sky-screen.js"></script>
   <script src="engines/audio.js"></script>
+  <script src="engines/tutorial-overlay.js"></script>
+  <script src="engines/hints-renderer.js"></script>
   <!-- Supabase client (before screens that depend on it) -->
   <script>
     var sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_KEY);
@@ -1971,6 +1973,7 @@
   <script src="screens/journey-screen.js"></script>
   <script src="screens/constellation-detail.js"></script>
   <script src="screens/home-screen.js"></script>
+  <script src="screens/victory-duel.js"></script>
   <script src="systems/offline-queue.js"></script>
 
   <script>
@@ -2241,15 +2244,15 @@
     var _probBarTarget    = 0.5; // целевое значение (к которому плавно движемся)
     // (_probBarRaf removed — prob bar uses CSS transition, not RAF)
     var _tutorialMode      = false; // true during the first-game tutorial
-    let _tutorialAutoSave  = false; // set true when tutorial ends → triggers auto-save on win screen
-    let _tutorialStep      = 0;     // 0=none, 1=m1 triggered, 2=m2 triggered, 3=m3 triggered
-    let _tutorialTooltip   = null;  // {text,x,y,startMs,fadingOut,fadeStartMs} | null
+    var _tutorialAutoSave  = false; // set true when tutorial ends → triggers auto-save on win screen
+    var _tutorialStep      = 0;     // 0=none, 1=m1 triggered, 2=m2 triggered, 3=m3 triggered
+    var _tutorialTooltip   = null;  // {text,x,y,startMs,fadingOut,fadeStartMs} | null
     var _tutorialBlocked   = false; // input blocked while tooltip is visible
-    let _tutorialBtnRect   = null;  // {x,y,w,h} of "Понятно" button, set each frame
-    let _tutorialPulseIdx  = -1;    // point index to pulse (moment 1), -1=none
-    let _tutorialPulseStart = 0;    // performance.now() when pulse started
-    let _tutorialPolygonSeen = false; // true once moment 2 was triggered
-    let _tutorialRaf       = null;  // animation loop handle
+    var _tutorialBtnRect   = null;  // {x,y,w,h} of "Понятно" button, set each frame
+    var _tutorialPulseIdx  = -1;    // point index to pulse (moment 1), -1=none
+    var _tutorialPulseStart = 0;    // performance.now() when pulse started
+    var _tutorialPolygonSeen = false; // true once moment 2 was triggered
+    var _tutorialRaf       = null;  // animation loop handle
     var _hintsOn    = localStorage.getItem('hintsEnabled') === '1';
     var _hintEdges  = [];  // [{a, b, value:'HIGH'|'MEDIUM'}], top-5 for current player
     var _hintsRaf   = null; // shimmer loop (stargazer theme only)
@@ -2296,235 +2299,9 @@
       }, 200);
     }
 
-    // ── tutorial ──────────────────────────────────────────────────────────────
+    // ── tutorial (extracted → engines/tutorial-overlay.js) ─────────────────
 
-    /** Show a tutorial tooltip at canvas position (x, y). Blocks game input. */
-    function showTutorialTooltip(text, x, y) {
-      _tutorialTooltip = { text, x, y, startMs: performance.now(), fadingOut: false, fadeStartMs: 0 };
-      _tutorialBlocked = true;
-      _tutorialBtnRect = null;
-      ensureTutorialLoop();
-    }
-
-    /** Begin fade-out of the current tooltip. Input unblocked when fade completes. */
-    function startDismissTutorial() {
-      if (!_tutorialTooltip || _tutorialTooltip.fadingOut) return;
-      _tutorialTooltip.fadingOut = true;
-      _tutorialTooltip.fadeStartMs = performance.now();
-      ensureTutorialLoop();
-    }
-
-    /**
-     * Check whether a new tutorial moment should be triggered after a move.
-     * Moment 2: first polygon scored.
-     * Moment 3: ≤3 valid moves remain.
-     */
-    function checkTutorialMoments() {
-      if (!_tutorialMode || _tutorialBlocked || gameOver) return;
-      if (_tutorialStep === 1 && !_tutorialPolygonSeen && polygons.length > 0) {
-        _tutorialPolygonSeen = true;
-        _tutorialStep = 2;
-        _tutorialPulseIdx = -1; // stop moment-1 pulse
-        showTutorialTooltip(
-          t('tut_caught'),
-          W / 2 - 148, H / 2 - 80
-        );
-        return;
-      }
-      if (_tutorialStep === 2 && estimateRemainingMoves() <= 3) {
-        _tutorialStep = 3;
-        showTutorialTooltip(
-          t('tut_final'),
-          W / 2 - 148, H - 170
-        );
-      }
-    }
-
-    /** Keep a tutorial animation loop running while tooltip or pulse is active. */
-    function ensureTutorialLoop() {
-      if (_tutorialRaf) return;
-      function loop() {
-        if (!_tutorialMode || (!_tutorialTooltip && _tutorialPulseIdx < 0)) {
-          _tutorialRaf = null; return;
-        }
-        draw();
-        _tutorialRaf = requestAnimationFrame(loop);
-      }
-      _tutorialRaf = requestAnimationFrame(loop);
-    }
-
-    /** Wrap text to lines fitting maxWidth using current ctx font. */
-    function tutWrapText(text, maxWidth) {
-      const result = [];
-      for (const para of text.split('\n')) {
-        const words = para.split(' ');
-        let line = '';
-        for (const w of words) {
-          const test = line ? line + ' ' + w : w;
-          if (ctx.measureText(test).width > maxWidth && line) { result.push(line); line = w; }
-          else line = test;
-        }
-        if (line) result.push(line);
-      }
-      return result;
-    }
-
-    /**
-     * Draw tutorial tooltip and point pulse on top of the game canvas.
-     * Called at the end of draw() when _tutorialMode is true.
-     */
-    function drawTutorialOverlay() {
-      // Pulse ring on the selected point (moment 1)
-      if (_tutorialPulseIdx >= 0 && points[_tutorialPulseIdx]) {
-        const pp = points[_tutorialPulseIdx];
-        const t = (performance.now() - _tutorialPulseStart) / 1200;
-        const pr = RADIUS * 2 + 4 * Math.sin(t * Math.PI * 2);
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(pp.x, pp.y, pr, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(225,223,220,0.75)';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      if (!_tutorialTooltip) return;
-      const { text, x, y, startMs, fadingOut, fadeStartMs } = _tutorialTooltip;
-      const now = performance.now();
-      let alpha;
-      if (fadingOut) {
-        alpha = 1 - Math.min(1, (now - fadeStartMs) / 300);
-        if (alpha <= 0) {
-          _tutorialTooltip = null;
-          _tutorialBlocked = false;
-          if (!gameOver) checkTutorialMoments(); // re-check after dismiss
-          return;
-        }
-      } else {
-        alpha = Math.min(1, (now - startMs) / 400);
-      }
-
-      ctx.save();
-      ctx.font = '18px system-ui, sans-serif';
-      const pad = 16, lineH = 26, btnH = 34, btnW = 130, boxW = 300;
-      const wrappedLines = tutWrapText(text, boxW - pad * 2);
-      const boxH = pad * 2 + wrappedLines.length * lineH + 10 + btnH;
-      const bx = Math.max(10, Math.min(W - boxW - 10, x));
-      const by = Math.max(10, Math.min(H - boxH - 10, y));
-
-      ctx.globalAlpha = alpha;
-
-      // Box
-      ctx.fillStyle = 'rgba(26,26,46,0.92)';
-      _rrect(ctx, bx, by, boxW, boxH, 10);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(248,247,245,0.18)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Text
-      ctx.fillStyle = '#F8F7F5';
-      ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
-      wrappedLines.forEach((ln, i) => ctx.fillText(ln, bx + pad, by + pad + i * lineH));
-
-      // Dismiss button
-      const btnX = bx + boxW - pad - btnW;
-      const btnY = by + boxH - pad - btnH;
-      ctx.fillStyle = 'rgba(248,247,245,0.14)';
-      _rrect(ctx, btnX, btnY, btnW, btnH, 6);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(248,247,245,0.35)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-      ctx.fillStyle = '#F8F7F5';
-      ctx.font = 'bold 14px system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('Понятно →', btnX + btnW / 2, btnY + btnH / 2);
-
-      // Store button rect for click detection (in canvas coordinates)
-      _tutorialBtnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
-
-      ctx.restore();
-    }
-
-    // ── hints ─────────────────────────────────────────────────────────────────
-    /** RAF loop to drive the stargazer shimmer animation for hints. */
-    function ensureHintsLoop() {
-      if (_hintsRaf) return;
-      function loop() {
-        if (!_hintsOn || activeTheme !== 'stargazer' || gameOver || !_hintEdges.length) {
-          _hintsRaf = null; return;
-        }
-        draw();
-        _hintsRaf = requestAnimationFrame(loop);
-      }
-      _hintsRaf = requestAnimationFrame(loop);
-    }
-
-
-    /**
-     * Draw hint edges on the canvas.
-     * Must be called BEFORE the regular edge layer so hints appear underneath.
-     */
-    function drawHints() {
-      if (!_hintEdges.length) return;
-      ctx.save();
-
-      const isStargazer = activeTheme === 'stargazer';
-      const isChalk = activeTheme === 'chalk';
-
-      _hintEdges.forEach(({ a, b, value }) => {
-        const ax = points[a].x, ay = points[a].y;
-        const bx = points[b].x, by = points[b].y;
-
-        if (isChalk) {
-          // Series of small chalk dots along the edge path
-          const dx = bx - ax, dy = by - ay;
-          const len = Math.hypot(dx, dy);
-          const n = Math.max(3, Math.floor(len / 18));
-          const r = value === 'HIGH' ? 3.5 : 2.5;
-          const alpha = value === 'HIGH' ? 0.42 : 0.22;
-          const color = value === 'HIGH'
-            ? CHALK_RAINBOW[currentPlayer * 3 % CHALK_RAINBOW.length]
-            : 'rgba(140,115,80,1)';
-          const seed = Math.abs(Math.sin(ax * 0.37 + ay * 0.19 + bx * 0.13)) % 1;
-          ctx.globalAlpha = alpha;
-          for (let k = 0; k <= n; k++) {
-            const t = k / n;
-            const jx = Math.sin(seed * 31.4 + k * 7.9) * 2.2;
-            const jy = Math.cos(seed * 11.7 + k * 13.3) * 2.2;
-            drawChalkDot(ctx, ax + dx * t + jx, ay + dy * t + jy, r, color);
-          }
-          ctx.globalAlpha = 1;
-        } else {
-          let alpha, dash, lw;
-          if (value === 'HIGH') { alpha = 0.35; dash = [8, 6]; lw = 2; }
-          else                  { alpha = 0.20; dash = [3, 8]; lw = 1.5; }
-
-          if (isStargazer) {
-            // Pulsing shimmer 20%→40%→20% over 2 s
-            const phase = (performance.now() % 2000) / 2000;
-            const pulse = 0.20 + 0.20 * Math.sin(phase * Math.PI * 2);
-            alpha = value === 'HIGH' ? Math.min(0.55, pulse * 1.8) : pulse;
-          }
-
-          ctx.globalAlpha = alpha;
-          ctx.strokeStyle = COLOR;
-          ctx.lineWidth = lw;
-          ctx.lineCap = 'round';
-          ctx.setLineDash(dash);
-          ctx.beginPath();
-          ctx.moveTo(ax, ay);
-          ctx.lineTo(bx, by);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        }
-      });
-
-      ctx.restore();
-    }
+    // ── hints (extracted → engines/hints-renderer.js) ─────────────────────
 
     /**
      * Завершает игру: устанавливает флаг gameOver, определяет победителя по счёту
@@ -3036,6 +2813,7 @@
       ctx.quadraticCurveTo(x, y, x + R, y);
       ctx.closePath();
     }
+    window._rrect = _rrect; // expose for tutorial-overlay.js
 
     /**
      * Обновляет позицию DOM-полосы вероятности (#prob-bar-fill).
@@ -3226,197 +3004,7 @@
      * @param {number} W — ширина canvas
      * @param {number} H — высота canvas
      */
-    function drawVictoryDuel(ctx, W, H) {
-      const leftPlayer  = winner >= 0 ? winner   : 0;
-      const rightPlayer = winner >= 0 ? 1-winner : 1;
-
-      // Вычисляет массив степеней точек по линиям конкретного игрока
-      function degreeOf(pl) {
-        const d = new Array(COUNT).fill(0);
-        lines.forEach((player, key) => {
-          if (player !== pl) return;
-          const [a, b] = key.split('-').map(Number);
-          d[a]++; d[b]++;
-        });
-        return d;
-      }
-
-      const degL = degreeOf(leftPlayer);
-      const degR = degreeOf(rightPlayer);
-
-      /**
-       * Вычисляет трансформацию точек игрока в пространство DW×DH.
-       * Масштабирует bounding-box активных точек с отступом PAD.
-       */
-      function makeTransform(deg) {
-        const PAD = 90;
-        const active = points.filter((_, i) => deg[i] > 0);
-        if (active.length === 0) return { tx: p => p.x, ty: p => p.y, scale: 1 };
-        const minX = Math.min(...active.map(p => p.x));
-        const maxX = Math.max(...active.map(p => p.x));
-        const minY = Math.min(...active.map(p => p.y));
-        const maxY = Math.max(...active.map(p => p.y));
-        const srcW = (maxX - minX) || 1;
-        const srcH = (maxY - minY) || 1;
-        const scale = Math.min((DW - PAD*2) / srcW, (DH - PAD*2) / srcH);
-        const offX = PAD + ((DW - PAD*2) - srcW * scale) / 2;
-        const offY = PAD + ((DH - PAD*2) - srcH * scale) / 2;
-        return {
-          tx: p => (p.x - minX) * scale + offX,
-          ty: p => (p.y - minY) * scale + offY,
-          scale,
-        };
-      }
-
-      const tfL = makeTransform(degL);
-      const tfR = makeTransform(degR);
-
-      /**
-       * Рисует созвездие одного игрока на переданный контекст c.
-       * Рендер зависит от activeTheme: stargazer — звёзды, minimal — S-кривые,
-       * suprematist — базовые слои + виниловый круг, остальные — T().dots/lines.
-       */
-      function drawConstellation(c, player, deg, tf) {
-        c.clearRect(0, 0, DW, DH);
-        c.fillStyle = T().background;
-        c.fillRect(0, 0, DW, DH);
-
-        if (activeTheme === 'stargazer') {
-          // ── Stargazer: светящиеся линии + звёзды ──────────────────────────
-          c.lineCap = 'round';
-          lines.forEach((pl, key) => {
-            if (pl !== player) return;
-            const [a, b] = key.split('-').map(Number);
-            const ax = tf.tx(points[a]), ay = tf.ty(points[a]);
-            const bx = tf.tx(points[b]), by = tf.ty(points[b]);
-            c.save();
-            c.lineCap = 'round';
-            c.shadowBlur  = 3;
-            c.shadowColor = 'rgba(248,247,245,0.90)';
-            c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by);
-            c.strokeStyle = 'rgba(248,247,245,0.88)'; c.lineWidth = 1.4; c.stroke();
-            c.restore();
-          });
-          points.forEach((p, i) => {
-            const d = deg[i];
-            if (d === 0) return;
-            const twinkle = getTwinkleBoost(i);
-            drawStarPointTo(c, tf.tx(p), tf.ty(p), Math.max(d, 2), false, false, false, 0.7 + twinkle * 0.9);
-          });
-
-        } else if (activeTheme === 'minimal') {
-          // ── Minimal: S-кривые + увеличенные узлы (аналог drawVictoryMinimal) ─
-          const sc = tf.scale;
-          c.strokeStyle = '#000000';
-          c.lineWidth   = 1.5 * sc;
-          c.globalAlpha = 0.55;
-          lines.forEach((pl, key) => {
-            if (pl !== player) return;
-            const [a, b] = key.split('-').map(Number);
-            const x1 = tf.tx(points[a]), y1 = tf.ty(points[a]);
-            const x2 = tf.tx(points[b]), y2 = tf.ty(points[b]);
-            const dx = x2 - x1, dy = y2 - y1;
-            const len = Math.hypot(dx, dy);
-            if (len === 0) return;
-            const nx = -dy / len, ny = dx / len;
-            const off = len * 0.25;
-            c.beginPath();
-            c.moveTo(x1, y1);
-            c.bezierCurveTo(x1+dx/3+nx*off, y1+dy/3+ny*off,
-                            x1+2*dx/3-nx*off, y1+2*dy/3-ny*off,
-                            x2, y2);
-            c.stroke();
-          });
-          c.globalAlpha = 1;
-          const BASE_R = RADIUS * 4 * sc;
-          points.forEach((p, i) => {
-            const d = deg[i];
-            if (d === 0) return;
-            const r = BASE_R * Math.pow(1.4, d);
-            const px = tf.tx(p), py = tf.ty(p);
-            c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2);
-            if (d === 1) {
-              c.strokeStyle = '#000000'; c.lineWidth = 1.5 * sc; c.stroke();
-            } else if (d === 2) {
-              c.fillStyle = '#ffffff'; c.fill();
-              c.strokeStyle = '#000000'; c.lineWidth = 2 * sc; c.stroke();
-            } else {
-              c.fillStyle = '#ffffff'; c.fill();
-              c.strokeStyle = '#000000'; c.lineWidth = 2.5 * sc; c.stroke();
-              c.beginPath(); c.arc(px, py, r * 0.18, 0, Math.PI * 2);
-              c.fillStyle = '#000000'; c.fill();
-            }
-          });
-
-        } else {
-          // ── Suprematist / Chalk / Default: полигоны + линии + точки ─────────
-          polygons.forEach(({ path, player: pl }, polyIdx) => {
-            if (pl !== player) return;
-            const poly = path.map(i => points[i]);
-            c.beginPath();
-            c.moveTo(tf.tx(poly[0]), tf.ty(poly[0]));
-            for (let k = 1; k < poly.length; k++) c.lineTo(tf.tx(poly[k]), tf.ty(poly[k]));
-            c.closePath();
-            if (activeTheme === 'chalk') {
-              c.globalAlpha = 0.28;
-              c.fillStyle = CHALK_FILL[polyIdx % CHALK_FILL.length];
-              c.fill();
-              c.globalAlpha = 1;
-            } else {
-              c.fillStyle = T().captured; c.fill();
-            }
-          });
-          lines.forEach((pl, key) => {
-            if (pl !== player) return;
-            const [a, b] = key.split('-').map(Number);
-            const ax = tf.tx(points[a]), ay = tf.ty(points[a]);
-            const bx = tf.tx(points[b]), by = tf.ty(points[b]);
-            c.beginPath(); c.moveTo(ax, ay); c.lineTo(bx, by);
-            c.strokeStyle = T().lines; c.lineWidth = 2; c.stroke();
-          });
-          points.forEach((p, i) => {
-            const d = deg[i];
-            if (d === 0) return;
-            const px = tf.tx(p), py = tf.ty(p);
-            if (activeTheme === 'chalk') {
-              drawChalkSpiral(c, px, py, 24, CHALK_RAINBOW[i % CHALK_RAINBOW.length], d);
-            } else {
-              const r = d >= 3 ? RADIUS*2 : d === 2 ? RADIUS*1.5 : RADIUS;
-              c.beginPath(); c.arc(px, py, r, 0, Math.PI * 2);
-              c.fillStyle = T().dots; c.fill();
-            }
-          });
-          // ── Suprematist: виниловый круг по centroid активных точек игрока ──
-          if (activeTheme === 'suprematist') {
-            const creamColor = '#F5F0E8';
-            const mainColor  = player === 0 ? '#CC2200' : '#1A1A1A';
-            const darkColor  = player === 0 ? '#1A1A1A' : '#CC2200';
-            const activeObjs = points.filter((_, i) => deg[i] > 0);
-            if (activeObjs.length > 0) {
-              const cx = activeObjs.reduce((s, p) => s + tf.tx(p), 0) / activeObjs.length;
-              const cy = activeObjs.reduce((s, p) => s + tf.ty(p), 0) / activeObjs.length;
-              const winScore   = polygons.filter(p => p.player === player).length;
-              const loseScore  = polygons.filter(p => p.player !== player && p.player >= 0).length;
-              const domination = winScore / Math.max(1, winScore + loseScore);
-              const mainR      = Math.min(DW, DH) * (0.18 + domination * 0.22);
-              const ringCount  = Math.min(3 + winScore, 7);
-              for (let k = 0; k < ringCount; k++) {
-                const frac  = 1 - (k / ringCount) * 0.88;
-                const color = k === ringCount - 1 ? darkColor : (k % 2 === 0 ? mainColor : creamColor);
-                c.beginPath(); c.arc(cx, cy, mainR * frac, 0, Math.PI * 2);
-                c.fillStyle = color; c.fill();
-              }
-              c.beginPath(); c.arc(cx, cy, mainR * 0.07, 0, Math.PI * 2);
-              c.fillStyle = creamColor; c.fill();
-            }
-          }
-        }
-      }
-
-      // Рисуем каждое созвездие в свой canvas
-      drawConstellation(ctxDL, leftPlayer,  degL, tfL);
-      drawConstellation(ctxDR, rightPlayer, degR, tfR);
-    }
+    // drawVictoryDuel extracted → screens/victory-duel.js
 
 
 
