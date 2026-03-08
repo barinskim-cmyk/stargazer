@@ -1958,6 +1958,7 @@
   <script src="engines/audio.js"></script>
   <script src="engines/tutorial-overlay.js"></script>
   <script src="engines/hints-renderer.js"></script>
+  <script src="engines/win-system.js"></script>
   <!-- Supabase client (before screens that depend on it) -->
   <script>
     var sb = supabase.createClient(APP_CONFIG.SUPABASE_URL, APP_CONFIG.SUPABASE_KEY);
@@ -1974,6 +1975,7 @@
   <script src="screens/constellation-detail.js"></script>
   <script src="screens/home-screen.js"></script>
   <script src="screens/victory-duel.js"></script>
+  <script src="screens/rank-up.js"></script>
   <script src="systems/offline-queue.js"></script>
 
   <script>
@@ -2303,203 +2305,8 @@
 
     // ── hints (extracted → engines/hints-renderer.js) ─────────────────────
 
-    /**
-     * Завершает игру: устанавливает флаг gameOver, определяет победителя по счёту
-     * (−1 при ничье), сбрасывает выделение и перерисовывает поле с экраном победы.
-     */
-    let _winParticleRaf = null;
-
-    function startWinEffect() {
-      // ── White flash ──
-      const flash = document.getElementById('win-flash');
-      flash.style.transition = 'none';
-      flash.style.opacity = '0.6';
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        flash.style.transition = 'opacity 0.3s ease';
-        flash.style.opacity = '0';
-      }));
-
-      // ── Star particles ──
-      const pc = document.getElementById('particle-canvas');
-      if (!pc) return;
-      pc.width  = Math.round(W * _canvasDpr);
-      pc.height = Math.round(H * _canvasDpr);
-      pc.style.width  = W + 'px';
-      pc.style.height = H + 'px';
-      const pctx = pc.getContext('2d');
-      pctx.scale(_canvasDpr, _canvasDpr);
-      const cx = W / 2, cy = H / 2;
-      const startT = performance.now();
-      if (_winParticleRaf) { cancelAnimationFrame(_winParticleRaf); _winParticleRaf = null; }
-
-      const particles = Array.from({ length: 20 }, () => {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 2 + Math.random() * 3;
-        return { x: cx, y: cy, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
-                 r: 2 + Math.random() * 2 };
-      });
-
-      (function loop() {
-        const elapsed = performance.now() - startT;
-        pctx.clearRect(0, 0, W, H);
-        let alive = false;
-        particles.forEach(p => {
-          const t = elapsed / 800;
-          if (t >= 1) return;
-          alive = true;
-          p.x += p.vx; p.y += p.vy;
-          pctx.beginPath();
-          pctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          pctx.fillStyle = `rgba(225,223,220,${1 - t})`;
-          pctx.fill();
-        });
-        if (alive) { _winParticleRaf = requestAnimationFrame(loop); }
-        else { pctx.clearRect(0, 0, W, H); _winParticleRaf = null; }
-      })();
-    }
-
-    function endGame() {
-      gameOver = true;
-      winner = scores[0] > scores[1] ? 0 : scores[1] > scores[0] ? 1 : -1; // -1 = draw
-      // Бонусные очки: победитель +1 (= захваченные поля + 1), ничья — без бонуса
-      if (winner >= 0) scores[winner] += 1;
-      selected = -1; previewValidation = null;
-      const _pbw = document.getElementById('prob-bar-wrap');
-      if (_pbw) _pbw.classList.remove('active');
-      progressionUpdate();
-      // Вычисляем детерминированную компоновку suprematist один раз
-      _supLayout = generateSupLayout();
-      // Rank-up ceremony runs before normal victory screen (skip during tutorial)
-      if (_rankUpNewRank && !_tutorialMode) {
-        startRankUpCeremony(_rankUpNewRank);
-      } else {
-        finishEndGame();
-      }
-    }
-
-    /**
-     * Вторая половина завершения игры — показывает экран результата.
-     * Вызывается либо сразу из endGame(), либо после ранг-ап церемонии.
-     *
-     * Три сценария:
-     * • Проигрыш (isAI && winner===1): очищает canvas, показывает #loss-content.
-     * • Ничья (winner===-1): затемняет canvas оверлеем, показывает «Ничья».
-     * • Победа: затемняет + уменьшает canvas (scale 0.42), затем рассветляет,
-     *   показывает #name-constellation для ввода имени созвездия.
-     *
-     * Для дуэльного режима: переключается на #duel-wrap с двумя отдельными canvas.
-     */
-    function finishEndGame() {
-      _rankUpNewRank = null;
-
-      // Обновляем turn-display: Победа / Ничья / Проигрыш
-      const td = document.getElementById('turn-display');
-      if (td) {
-        if (winner === -1)          td.textContent = t('turn_draw');
-        else if (isAI && winner === 1) td.textContent = t('turn_loss');
-        else                        td.textContent = t('turn_win');
-      }
-
-      // Проигрыш: останавливаем все анимации, очищаем canvas, показываем loss-экран
-      if (isAI && winner === 1) {
-        [_twinkleRaf, _gameTwinkleRaf, _chalkAnimRaf, _hintsRaf]
-          .forEach(r => r && cancelAnimationFrame(r));
-        _twinkleRaf = _gameTwinkleRaf = _chalkAnimRaf = _hintsRaf = null;
-        ctx.setTransform(_canvasDpr, 0, 0, _canvasDpr, 0, 0);
-        ctx.clearRect(0, 0, W, H);
-        document.getElementById('loss-score-line').textContent = scores[0] + ' : ' + scores[1];
-        document.getElementById('loss-names-line').textContent =
-          (playerNames[0] || t('player_default')) + '  —  ' + (playerNames[1] || t('ai_name'));
-        document.getElementById('canvas-area').classList.add('lost');
-        return;
-      }
-
-      draw();
-      if (winner >= 0) { startWinEffect(); playSound('victory'); haptic('heavy'); }
-      const winName = winner >= 0 ? playerNames[winner] : null;
-      document.getElementById('victory-title').textContent = winName ? `${t('duel_name_prefix')} ${winName}` : t('turn_draw');
-      document.getElementById('victory-sub').textContent   = winName ? t('victory_sub_win') : `${scores[0]} : ${scores[1]}`;
-      document.getElementById('victory-rating').textContent =
-        (isAI && lastRatingGain > 0)
-          ? `+${lastRatingGain} ✦  ${loadProgress().rating}` : '';
-      // Tutorial: override victory sub-text and mark as done
-      if (_tutorialMode) {
-        localStorage.setItem('tutorialDone', '1');
-        _tutorialMode = false;
-        _tutorialAutoSave = true;
-        if (_tutorialRaf) { cancelAnimationFrame(_tutorialRaf); _tutorialRaf = null; }
-        _tutorialTooltip = null; _tutorialBlocked = false;
-        document.getElementById('victory-sub').textContent = t('victory_first_const');
-      }
-      document.getElementById('canvas-area').classList.add('ended');
-
-      // Duel-режим: переключаемся на два отдельных canvas
-      const isDuel = !isAI;
-      document.getElementById('canvas-area').classList.toggle('duel', isDuel);
-      if (isDuel) {
-        const lp = winner >= 0 ? winner   : 0;
-        const rp = winner >= 0 ? 1-winner : 1;
-        document.getElementById('duel-name-left').textContent  = `${t('duel_name_prefix')} ${playerNames[lp] || (t('player_default') + ' ' + (lp+1))}`;
-        document.getElementById('duel-name-right').textContent = `${t('duel_name_prefix')} ${playerNames[rp] || (t('player_default') + ' ' + (rp+1))}`;
-        const isDraw = winner < 0;
-        document.getElementById('duel-sub-left').textContent  = isDraw ? `${scores[lp]} ${t('duel_pts')}` : t('duel_won');
-        document.getElementById('duel-sub-right').textContent = isDraw ? `${scores[rp]} ${t('duel_pts')}` : t('duel_next_time');
-        document.getElementById('victory-title').style.visibility = 'hidden';
-        document.getElementById('victory-sub').style.visibility   = 'hidden';
-      }
-      // Запускаем мерцание звёзд на экране победы (только тема stargazer)
-      if (activeTheme === 'stargazer') startTwinkleLoop();
-      // Запускаем покадровую анимацию chalk-победы
-      if (activeTheme === 'chalk') startChalkAnim();
-
-      // Анимированная последовательность завершения игры
-      const _fadeOverlay = document.getElementById('canvas-fade-overlay');
-      const _vc = document.getElementById('victory-content');
-      const _gameCanvas = document.getElementById('c');
-
-      if (!winName) {
-        // Ничья: затемнение + надпись "Ничья" + поле для сохранения
-        requestAnimationFrame(() => { _fadeOverlay.style.opacity = '1'; });
-        setTimeout(() => {
-          _vc.style.opacity = '1';
-          _vc.style.pointerEvents = 'auto';
-        }, 800);
-        setTimeout(() => {
-          _fadeOverlay.style.opacity = '0';
-          _gameCanvas.style.transform = 'scale(0.42) translateY(-12%)';
-        }, 1200);
-        setTimeout(() => {
-          const _nc = document.getElementById('name-constellation');
-          const _input = document.getElementById('name-const-input');
-          _input.value = playerNames[0] || '';
-          applyGuestMode();
-          _nc.style.opacity = '1';
-          _nc.style.pointerEvents = 'auto';
-          document.getElementById('victory-actions').style.display = 'none';
-          if (_tutorialAutoSave) { _doTutorialAutoSave(_input.value.trim() || 'Моё созвездие'); }
-        }, 2000);
-      } else {
-        // Победа: затемнение + уменьшение → просветление → поле имени снизу
-        requestAnimationFrame(() => {
-          _fadeOverlay.style.opacity = '1';
-          _gameCanvas.style.transform = 'scale(0.42) translateY(-12%)';
-        });
-        // Фаза 2: overlay исчезает — созвездие снова яркое, но маленькое
-        setTimeout(() => { _fadeOverlay.style.opacity = '0'; }, 1000);
-        // Фаза 3: появляется поле для имени под созвездием
-        setTimeout(() => {
-          const _nc = document.getElementById('name-constellation');
-          const _input = document.getElementById('name-const-input');
-          _input.value = winName;
-          applyGuestMode();
-          _nc.style.opacity = '1';
-          _nc.style.pointerEvents = 'auto';
-          document.getElementById('victory-actions').style.display = 'none';
-          if (_tutorialAutoSave) { _doTutorialAutoSave(_input.value.trim() || 'Моё созвездие'); }
-          else { _input.focus(); }
-        }, 1600);
-      }
-    }
+    // ── win-system (extracted → engines/win-system.js) ────────────────────
+    var _winParticleRaf = null;
 
     // ── ui ────────────────────────────────────────────────────────────────────
 
@@ -2815,15 +2622,7 @@
     }
     window._rrect = _rrect; // expose for tutorial-overlay.js
 
-    /**
-     * Обновляет позицию DOM-полосы вероятности (#prob-bar-fill).
-     * Анимация выполняется через CSS transition (width 0.4s ease-out).
-     */
-    function startProbBarAnim() {
-      _probBarDisplay = _probBarTarget;
-      const fill = document.getElementById('prob-bar-fill');
-      if (fill) fill.style.width = (_probBarTarget * 100).toFixed(1) + '%';
-    }
+    // startProbBarAnim extracted → engines/win-system.js
 
     // ── last move ─────────────────────────────────────────────────────────────
 
@@ -3022,17 +2821,7 @@
      */
 
     /** Render rank title + rating in the bottom panel #rank-display. */
-    function renderProgressWidget() {
-      const p = loadProgress();
-      const el = document.getElementById('rank-display');
-      if (!el) return;
-      const info = computeRank(p.rating);
-      el.textContent = `${info.title} · ${p.rating}`;
-      const p1lvlEl = document.getElementById('p1level');
-      const p1starsEl = document.getElementById('p1-rank-stars');
-      if (p1lvlEl) p1lvlEl.textContent = info.name;
-      if (p1starsEl) p1starsEl.textContent = '★'.repeat(info.rank);
-    }
+    // renderProgressWidget extracted → screens/rank-up.js
 
     /**
      * Universal screen transition: fade hideEl out, then fade showEl in.
@@ -3096,84 +2885,7 @@
       }
     }
 
-    // ── rank-up ceremony ───────────────────────────────────────────────────────
-
-
-    /**
-     * Show rank-up ceremony on canvas: dark starfield, rank name, emblem.
-     * Fades in 800ms, holds 2500ms, calls finishEndGame() when done.
-     */
-    function startRankUpCeremony(rankInfo) {
-      _rankUpActive = true;
-      const startMs = performance.now();
-      const FADE_IN = 800, HOLD = 2500, FADE_OUT = 500;
-      const TOTAL = FADE_IN + HOLD + FADE_OUT;
-
-      function frame() {
-        const elapsed = performance.now() - startMs;
-        if (elapsed >= TOTAL) {
-          _rankUpActive = false;
-          _rankUpRaf = null;
-          finishEndGame();
-          return;
-        }
-
-        // Alpha envelope
-        let alpha;
-        if      (elapsed < FADE_IN)         alpha = elapsed / FADE_IN;
-        else if (elapsed < FADE_IN + HOLD)  alpha = 1;
-        else                                alpha = 1 - (elapsed - FADE_IN - HOLD) / FADE_OUT;
-
-        ctx.setTransform(_canvasDpr, 0, 0, _canvasDpr, 0, 0);
-        ctx.clearRect(0, 0, W, H);
-        ctx.save();
-
-        // Dark background
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = '#050510';
-        ctx.fillRect(0, 0, W, H);
-
-        // Starfield (deterministic, seeded by rank)
-        const rk = rankInfo.rank;
-        for (let i = 0; i < 180; i++) {
-          const sx = Math.abs(Math.sin(i * 127.3 + rk * 11)) * W;
-          const sy = Math.abs(Math.cos(i * 73.9  + rk * 7))  * H;
-          const sr = 0.4 + Math.abs(Math.sin(i * 211)) * 1.3;
-          const sb = 0.25 + 0.55 * Math.abs(Math.sin(i * 333 + performance.now() / 3000));
-          ctx.globalAlpha = alpha * sb;
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        ctx.globalAlpha = alpha;
-
-        // Sub-text
-        ctx.fillStyle = 'rgba(248,247,245,0.75)';
-        ctx.font = '20px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('Новый ранг разблокирован', W / 2, H / 2 - 72);
-
-        // Rank name
-        ctx.fillStyle = '#C0BDBA';
-        ctx.font = 'bold 42px serif';
-        ctx.fillText(rankInfo.name, W / 2, H / 2 - 24);
-
-        // Sub-rank numeral (I / II / III)
-        ctx.fillStyle = 'rgba(220,218,215,0.7)';
-        ctx.font = '24px serif';
-        ctx.fillText(['','I','II','III'][rankInfo.subRank], W / 2, H / 2 + 18);
-
-        // Emblem
-        drawRankEmblem(rankInfo.rank, W / 2, H / 2 + 100);
-
-        ctx.restore();
-        _rankUpRaf = requestAnimationFrame(frame);
-      }
-      _rankUpRaf = requestAnimationFrame(frame);
-    }
+    // ── rank-up ceremony (extracted → screens/rank-up.js) ──────────────────
 
 
     /**
