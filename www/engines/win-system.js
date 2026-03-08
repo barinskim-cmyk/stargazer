@@ -123,8 +123,8 @@
     draw();
     if (winner >= 0) { startWinEffect(); playSound('victory'); haptic('heavy'); }
     var winName = winner >= 0 ? playerNames[winner] : null;
-    document.getElementById('victory-title').textContent = winName ? (t('duel_name_prefix') + ' ' + winName) : t('turn_draw');
-    document.getElementById('victory-sub').textContent   = winName ? t('victory_sub_win') : (scores[0] + ' : ' + scores[1]);
+    document.getElementById('victory-title').textContent = winName ? t('victory_sub_win') : t('turn_draw');
+    document.getElementById('victory-sub').textContent   = scores[0] + ' : ' + scores[1];
     document.getElementById('victory-rating').textContent =
       (isAI && lastRatingGain > 0)
         ? '+' + lastRatingGain + ' ✦  ' + loadProgress().rating : '';
