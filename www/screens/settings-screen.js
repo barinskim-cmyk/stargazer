@@ -41,6 +41,8 @@
     document.querySelectorAll('.s-theme-btn').forEach(function (btn) {
       btn.classList.toggle('active', btn.dataset.theme === activeTheme);
     });
+    // Star color swatches
+    if (typeof _refreshStarColorSwatches === 'function') _refreshStarColorSwatches();
     // Language buttons
     _updateLangBtns();
   }
@@ -88,6 +90,33 @@
       _applySettingsUI();
     });
   });
+
+  // ── Star Color picker ────────────────────────────────────────────────────────
+  (function _buildStarColorSwatches() {
+    var container = document.getElementById('st-color-swatches');
+    if (!container || !window.STAR_COLORS) return;
+    STAR_COLORS.forEach(function (col) {
+      var btn = document.createElement('button');
+      btn.className = 'color-swatch';
+      btn.style.background = col.dot;
+      btn.title = col.label;
+      btn.dataset.colorId = col.id;
+      btn.addEventListener('click', function () {
+        window._appSettings.starColor = col.id;
+        _saveSettings();
+        _refreshStarColorSwatches();
+      });
+      container.appendChild(btn);
+    });
+    _refreshStarColorSwatches();
+  })();
+
+  function _refreshStarColorSwatches() {
+    var cur = (window._appSettings && window._appSettings.starColor) || 'gold';
+    document.querySelectorAll('#st-color-swatches .color-swatch').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.colorId === cur);
+    });
+  }
 
   // Language picker
   document.querySelectorAll('.s-lang-btn').forEach(function (btn) {

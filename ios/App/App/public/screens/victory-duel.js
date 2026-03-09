@@ -93,11 +93,17 @@
           c.strokeStyle = 'rgba(248,247,245,0.88)'; c.lineWidth = 1.4; c.stroke();
           c.restore();
         });
+        var _vCol = (window.starColorById && window._appSettings && window._appSettings.starColor && window._appSettings.starColor !== 'gold')
+          ? starColorById(window._appSettings.starColor) : null;
         points.forEach(function (p, i) {
           var d = deg[i];
           if (d === 0) return;
           var twinkle = getTwinkleBoost(i);
-          drawStarPointTo(c, tf.tx(p), tf.ty(p), Math.max(d, 2), false, false, false, 0.7 + twinkle * 0.9);
+          if (_vCol) {
+            drawStarPointToCol(c, tf.tx(p), tf.ty(p), Math.max(d, 2), false, false, false, 0.7 + twinkle * 0.9, _vCol.glowColor);
+          } else {
+            drawStarPointTo(c, tf.tx(p), tf.ty(p), Math.max(d, 2), false, false, false, 0.7 + twinkle * 0.9);
+          }
         });
 
       } else if (activeTheme === 'minimal') {

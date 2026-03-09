@@ -251,6 +251,7 @@
       const CREAL = 160; // display size in screen-px at scale 1
       // Outer halo tint for IAU real constellations (spikes + core stay gold)
       const IAU_GLOW = '205,218,255'; // soft blue-white halo
+      const IAU_CORE = '242,244,255'; // near-white core
 
       if (_skyScale < _SKY_THRESH_DOT) {
         // LOD1: glowing dot with subtle twinkle

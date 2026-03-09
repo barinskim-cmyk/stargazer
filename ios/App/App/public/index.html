@@ -6,7 +6,7 @@
   <script>
     // Глобальные настройки — читаем сразу, до загрузки остального JS
     window._appSettings = Object.assign(
-      { sound: true, vibration: true, starGlow: 'all' },
+      { sound: true, vibration: true, starGlow: 'all', starColor: 'gold' },
       (() => { try { return JSON.parse(localStorage.getItem('app_settings') || '{}'); } catch(e) { return {}; } })()
     );
 
@@ -991,6 +991,12 @@
     }
     .color-swatch:active { transform: scale(0.90); }
 
+    /* ── settings star color swatches ── */
+    .st-color-swatches {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .st-color-swatches .color-swatch { width: 24px; height: 24px; }
+
     /* ── settings screen ── */
     #settings-screen {
       position: absolute; inset: 0; z-index: 17;
@@ -1585,6 +1591,13 @@
           <button class="s-seg-btn" id="sg-all" data-glow="all" data-i18n="settings_glow_all">All</button>
           <button class="s-seg-btn" id="sg-active" data-glow="active" data-i18n="settings_glow_active">Active</button>
         </div>
+      </div>
+      <div class="settings-row">
+        <div class="settings-row-label">
+          <div class="settings-row-title" data-i18n="settings_star_color_title">Star color</div>
+          <div class="settings-row-sub" data-i18n="settings_star_color_sub">Color of your stars</div>
+        </div>
+        <div id="st-color-swatches" class="st-color-swatches"></div>
       </div>
     </div>
 
@@ -2533,13 +2546,21 @@
 
         if (activeTheme === 'stargazer') {
           // Тема stargazer: звёздный рендер с градиентами и свечением
+          const _gameCol = (window.starColorById && window._appSettings.starColor && window._appSettings.starColor !== 'gold')
+            ? starColorById(window._appSettings.starColor) : null;
           points.forEach((p, i) => {
             const bt = _pointBirthScale(i);
             if (bt === 0) return;
             if (bt < 1) { ctx.save(); ctx.globalAlpha = bt; ctx.translate(p.x, p.y); ctx.scale(bt, bt); ctx.translate(-p.x, -p.y); }
-            drawStarPoint(ctx, p.x, p.y, activeDegree[i],
-              i === hovered, i === selected, i === blockingPoint,
-              getTwinkleBoost(i) * 0.6);
+            if (_gameCol) {
+              drawStarPointCol(ctx, p.x, p.y, activeDegree[i],
+                i === hovered, i === selected, i === blockingPoint,
+                getTwinkleBoost(i) * 0.6, _gameCol.glowColor);
+            } else {
+              drawStarPoint(ctx, p.x, p.y, activeDegree[i],
+                i === hovered, i === selected, i === blockingPoint,
+                getTwinkleBoost(i) * 0.6);
+            }
             if (bt < 1) ctx.restore();
           });
         } else if (activeTheme === 'chalk') {
@@ -2607,13 +2628,19 @@
         }
 
         // Draw points scaled by degree (0 = hidden)
+        const _endCol = (window.starColorById && window._appSettings.starColor && window._appSettings.starColor !== 'gold')
+          ? starColorById(window._appSettings.starColor) : null;
         points.forEach((p, i) => {
           const d = winner >= 0 ? degree[i] : 1;
           if (d === 0) return;
           if (activeTheme === 'stargazer') {
             // Тема stargazer: звёздный рендер с градиентами (degree из линий победителя)
             // boost=0.7 — постоянная надъяркость на экране победы; +мерцание до ×0.9
-            drawStarPoint(ctx, p.x, p.y, d, false, false, false, 0.7 + getTwinkleBoost(i) * 0.9);
+            if (_endCol) {
+              drawStarPointCol(ctx, p.x, p.y, d, false, false, false, 0.7 + getTwinkleBoost(i) * 0.9, _endCol.glowColor);
+            } else {
+              drawStarPoint(ctx, p.x, p.y, d, false, false, false, 0.7 + getTwinkleBoost(i) * 0.9);
+            }
           } else {
             const r = d >= 3 ? RADIUS * 2 : d === 2 ? RADIUS * 1.5 : RADIUS;
             ctx.beginPath();
