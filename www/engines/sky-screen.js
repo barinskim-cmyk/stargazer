@@ -640,12 +640,20 @@
     const W       = _SKY_WORLD - 2 * margin;
     const MIN_DIST = 4000; // world-units min gap between constellation centers
 
-    // Чисто детерминированные позиции через хэш — без collision avoidance.
-    // Collision avoidance при большом мире создаёт видимую регулярную сетку.
-    // Хэш-функция уже даёт хорошую псевдослучайную дисперсию по всей площади.
+    const placed = [];
     _skyRealPos = REAL_CONSTELLATIONS.map((rc, i) => {
-      const wx = margin + _skyHash('rcx' + i) * W;
-      const wy = margin + _skyHash('rcy' + i) * W;
+      let wx, wy, ok, attempt = 0;
+      do {
+        wx = margin + _skyHash('rcx' + i + '_a' + attempt) * W;
+        wy = margin + _skyHash('rcy' + i + '_a' + attempt) * W;
+        ok = placed.every(p => Math.hypot(p.wx - wx, p.wy - wy) >= MIN_DIST);
+        attempt++;
+      } while (!ok && attempt < 80);
+      if (!ok) { // fallback: первый кандидат
+        wx = margin + _skyHash('rcx' + i + '_a0') * W;
+        wy = margin + _skyHash('rcy' + i + '_a0') * W;
+      }
+      placed.push({ wx, wy });
       return { n: rc.n, pts: rc.pts, lns: rc.lns, wx, wy };
     });
   }
