@@ -15,11 +15,11 @@
 
   // ── sky screen ("Общее небо") — zoomable galaxy canvas ──────────────────
 
-  var _SKY_WORLD      = 3000;
+  var _SKY_WORLD      = 100000; // 100k×100k world → ~300k user constellations capacity
   var _SKY_SMAX       = 3.0;
   var _SKY_THRESH_DOT = 0.15;  // ниже → heatmap-точки (LOD1)
   var _SKY_THRESH     = 0.50;  // выше → полное созвездие (LOD3), между → galaxy (LOD2)
-  var _SKY_CELL       = 300;   // размер ячейки процедурных звёзд
+  var _SKY_CELL       = 600;   // размер ячейки процедурных звёзд (масштабируется с миром)
 
   var _skyMode  = 'global'; // 'global' | 'personal'
   var _skyData  = null, _skyPos = [];
@@ -93,10 +93,11 @@
     ];
   }
 
-  /** Минимальный масштаб: мировой прямоугольник заполняет экран по наименьшей стороне. */
+  /** Минимальный масштаб: мировой прямоугольник заполняет экран по наибольшей стороне,
+   *  чтобы при максимальном уменьшении не были видны «края» неба. */
   function _skyMinScale() {
     if (!_skyCV) return 0.08;
-    return Math.min(_skyCV.width, _skyCV.height) / _SKY_WORLD;
+    return Math.max(_skyCV.width, _skyCV.height) / _SKY_WORLD;
   }
 
   /** Зажимает offset чтобы мир не уходил за экран. */
@@ -152,7 +153,7 @@
   }
 
   function _skyItemToPos(item, fadeIn) {
-    const margin = 200;
+    const margin = 3000; // scaled with world size
     const id = String(item.id || item.name || '');
     // Если сервер вернул gx/gy — используем их (0-1 → мировые координаты)
     const wx = (item.gx != null)
@@ -174,7 +175,7 @@
 
   function _skyBuildPos(data) {
     const placed = [];
-    const MIN_DIST = 120;
+    const MIN_DIST = 1200; // scaled with world (was 120 at world=3000)
     _skyPos = data.map(item => {
       const p = _skyItemToPos(item, false);
       // Collision avoidance только для созвездий без серверных координат
@@ -208,19 +209,33 @@
     const wL = (-_skyOffX) / _skyScale - pad,  wR = (W - _skyOffX) / _skyScale + pad;
     const wT = (-_skyOffY) / _skyScale - pad,  wB = (H - _skyOffY) / _skyScale + pad;
 
-    // ── Случайные фоновые звёзды (pre-generated, fully random) ──────────
-    if (sk.skyBgStar && _skyBgPreStars) {
-      // Draw stars with soft blur edges: filter applied once to entire batch (GPU-accelerated)
+    // ── Фоновые звёзды: cell-based процедурная генерация (масштабируется с любым _SKY_WORLD) ──
+    if (sk.skyBgStar) {
+      // Определяем диапазон видимых ячеек
+      const cxL = Math.floor(wL / _SKY_CELL);
+      const cxR = Math.ceil(wR  / _SKY_CELL);
+      const cyT = Math.floor(wT / _SKY_CELL);
+      const cyB = Math.ceil(wB  / _SKY_CELL);
+      // Ограничиваем количество ячеек за кадр (max 32×32 = 1024 ячейки)
+      // При zoom-out пропускаем ячейки через stride чтобы держать FPS
+      const maxCells = 32;
+      const sx = Math.max(1, Math.ceil((cxR - cxL + 1) / maxCells));
+      const sy = Math.max(1, Math.ceil((cyB - cyT + 1) / maxCells));
       ctx.save();
       ctx.filter = 'blur(0.7px)';
-      _skyBgPreStars.forEach(s => {
-        if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) return;
-        const { x, y } = _skyW2S(s.x, s.y);
-        // Diameter 1–3px → radius 0.5–1.5px
-        const r = Math.max(0.5, Math.min(1.5, s.r * 0.55));
-        ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
-      });
+      for (let cx = cxL; cx <= cxR; cx += sx) {
+        for (let cy = cyT; cy <= cyB; cy += sy) {
+          const stars = _skyGetCellStars(cx, cy);
+          for (let i = 0; i < stars.length; i++) {
+            const s = stars[i];
+            if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) continue;
+            const { x, y } = _skyW2S(s.x, s.y);
+            const r = Math.max(0.5, Math.min(1.5, s.r * 0.55));
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
+          }
+        }
+      }
       ctx.filter = 'none';
       ctx.restore();
     }
@@ -471,14 +486,15 @@
       const y0 = Math.max(0, wT / _SKY_WORLD);
       const x1 = Math.min(1, wR / _SKY_WORLD);
       const y1 = Math.min(1, wB / _SKY_WORLD);
-      // Пропускаем если viewport вне мира или охватывает всё (слишком далеко)
-      if (x0 >= x1 || y0 >= y1 || (x1 - x0) > 0.95) return;
+      // Пропускаем если viewport вне мира или охватывает >70% мира (zoom слишком далеко —
+      // bbox-запрос будет почти полным скан таблицы; лучше показать seed-данные)
+      if (x0 >= x1 || y0 >= y1 || (x1 - x0) > 0.70) return;
       const { data, error } = await sb.from('constellations')
         .select('id, name, data, user_id, gx, gy, created_at')
         .gte('gx', x0).lte('gx', x1)
         .gte('gy', y0).lte('gy', y1)
         .order('created_at', { ascending: false })
-        .limit(300);
+        .limit(500);
       if (error || !data || !data.length) return;
       const seen = new Set(_skyData ? _skyData.map(d => d.id) : []);
       const fresh = data.filter(d => !seen.has(d.id));
@@ -569,7 +585,15 @@
 
   /**
    * Загружает глобальное небо из Supabase.
-   * При отсутствии сети или превышении таймаута 6с — показывает кнопку «Повторить».
+   *
+   * Стратегия (оптимизировано для мира 100k×100k):
+   *  1. Загружает 60 последних созвездий как «затравку» — пользователь сразу что-то видит.
+   *  2. Подписывается на realtime INSERT.
+   *  3. Запускает _skyBboxLoad() с небольшой задержкой — он подгрузит созвездия
+   *     в текущем viewport по мере zoom/pan.
+   *
+   * Глобальный limit(100) убран: при большом числе пользователей
+   * весь датасет не грузится никогда — только viewport через bbox.
    */
   async function _skyReloadGlobal() {
     const st = document.getElementById('sky-status');
@@ -577,17 +601,15 @@
     st.style.pointerEvents = 'none';
     st.textContent = t('sky_loading'); st.style.display = 'block';
 
-    // NOTE: navigator.onLine is unreliable in iOS WKWebView — it often returns
-    // false even when the device is connected. Skip the pre-check and always
-    // attempt the actual request; the timeout handles real connectivity issues.
+    // NOTE: navigator.onLine is unreliable in iOS WKWebView — skip pre-check,
+    // attempt the request directly; timeout handles real connectivity issues.
 
-    // Fetch с таймаутом 12 секунд (увеличен с 6с: первый запрос на iOS может быть медленнее)
     let result;
     try {
       const fetchPromise = sb.from('constellations')
         .select('id, name, data, user_id, gx, gy, created_at')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(60); // seed: last 60 constellations anywhere in the world
       const timeoutPromise = new Promise((_, rej) =>
         setTimeout(() => rej(new Error('timeout')), 12000)
       );
@@ -602,47 +624,26 @@
 
     if (error) {
       console.error('Supabase error:', error);
-      // Show offline UI only for network-type errors; for auth/query errors log and retry
       _skyShowOfflineUI(_skyReloadGlobal);
       return;
     }
     if (!data || !data.length) {
       st.textContent = t('sky_be_first'); st.style.display = 'block';
+      _skySubscribe();
       return;
     }
     _skyData = data;
-    // Supplement _mySkyNames with server-side user_id matches
     const uid = _skyGetUserId();
-    if (uid) {
-      data.forEach(d => { if (d.user_id === uid) _mySkyNames.add(d.name); });
-    }
+    if (uid) data.forEach(d => { if (d.user_id === uid) _mySkyNames.add(d.name); });
     _skyBuildPos(data);
     if (_skyHighlightId) _skyFlyToHighlight();
     _skySubscribe();
+    // Запускаем bbox-загрузку после того как layout устоится (150 мс → 500 мс)
+    setTimeout(_skyBboxLoad, 500);
   }
 
-  /** Generate (once) a large set of fully random bg stars covering the world. */
-  function _skyEnsurePreStars() {
-    if (_skyBgPreStars) return;
-    const N = 3200; // total bg stars: ~1.8x more than current, truly random
-    _skyBgPreStars = [];
-    for (let i = 0; i < N; i++) {
-      // Vary density: 80% tiny (r 0.3-1.1), 16% medium (r 1.1-2.2), 4% bright (r 2.0-3.2)
-      const tier = Math.random();
-      const r = tier < 0.80 ? 0.3 + Math.random() * 0.8
-              : tier < 0.96 ? 1.1 + Math.random() * 1.1
-              :               2.0 + Math.random() * 1.2;
-      const a = tier < 0.80 ? 0.05 + Math.random() * 0.22
-              : tier < 0.96 ? 0.12 + Math.random() * 0.32
-              :               0.28 + Math.random() * 0.32;
-      _skyBgPreStars.push({
-        x:   Math.random() * _SKY_WORLD,
-        y:   Math.random() * _SKY_WORLD,
-        r, a,
-        col: _BG_COLORS[Math.floor(Math.random() * _BG_COLORS.length)],
-      });
-    }
-  }
+  /** No-op: replaced by cell-based bg rendering which scales to any world size. */
+  function _skyEnsurePreStars() { /* cell-based rendering used instead */ }
 
   /** Place all 88 IAU constellations randomly (but deterministically) across the sky world.
    *  Uses hash-seeded Poisson-style placement: each constellation tries up to 60 candidate
@@ -650,9 +651,9 @@
    *  This gives an organic scatter with no visible grid or sector pattern. */
   function _skyEnsureRealConstellations() {
     if (_skyRealPos) return;
-    const margin  = 280;
+    const margin  = 3000; // scaled with world size
     const W       = _SKY_WORLD - 2 * margin;
-    const MIN_DIST = 230; // world-units min gap between constellation centers
+    const MIN_DIST = 4000; // world-units min gap between constellation centers
 
     const placed = []; // already accepted positions
     _skyRealPos = REAL_CONSTELLATIONS.map((rc, i) => {
@@ -683,8 +684,7 @@
       _mySkyNames = new Set(saved.map(s => s.name));
     } catch(e) { _mySkyNames = new Set(); }
     _skyEnsureBg();                 // для rank-up анимаций
-    _skyEnsurePreStars();           // random bg stars for sky canvas
-    _skyEnsureRealConstellations(); // place IAU constellations
+    _skyEnsureRealConstellations(); // place IAU constellations (cell-based bg stars need no init)
     document.getElementById('sky-hub-screen').style.display = 'none';
     const _skyScreenEl = document.getElementById('sky-screen');
     _skyScreenEl.style.display = 'flex';
