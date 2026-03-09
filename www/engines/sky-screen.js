@@ -250,37 +250,43 @@
     if (_skyRealPos) {
       const CREAL = 160; // display size in screen-px at scale 1
       if (_skyScale < _SKY_THRESH_DOT) {
-        // LOD1: single dim dot per constellation
+        // LOD1: glowing dot — cool white, mirrors user LOD1 brightness
         _skyRealPos.forEach(rc => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x, y } = _skyW2S(rc.wx, rc.wy);
-          ctx.globalAlpha = 0.18;
-          ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(195,205,255,1)'; ctx.fill();
+          if (sk.skyGlow) {
+            const g = ctx.createRadialGradient(x, y, 0, x, y, 5);
+            g.addColorStop(0, 'rgba(215,228,255,0.20)');
+            g.addColorStop(1, 'rgba(200,218,255,0)');
+            ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = g; ctx.fill();
+          }
+          ctx.globalAlpha = 0.30;
+          ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(228,238,255,1)'; ctx.fill();
           ctx.globalAlpha = 1;
         });
       } else if (_skyScale < _SKY_THRESH) {
-        // LOD2: soft halo glow
+        // LOD2: halo glow — cool white, mirrors user LOD2 structure
         _skyRealPos.forEach(rc => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x, y } = _skyW2S(rc.wx, rc.wy);
-          const r = 3 + 9 * (_skyScale / _SKY_THRESH);
-          ctx.globalAlpha = 0.20;
+          const r = 1.2 + 5 * (_skyScale / _SKY_THRESH);
           if (sk.skyGlow) {
-            const g = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2);
-            g.addColorStop(0,   'rgba(185,195,255,0.55)');
-            g.addColorStop(0.5, 'rgba(185,195,255,0.12)');
-            g.addColorStop(1,   'rgba(185,195,255,0)');
-            ctx.beginPath(); ctx.arc(x, y, r * 2.2, 0, Math.PI * 2);
+            const haloR = r * 2.8;
+            const g = ctx.createRadialGradient(x, y, 0, x, y, haloR);
+            g.addColorStop(0,   'rgba(215,228,255,0.30)');
+            g.addColorStop(0.4, 'rgba(200,215,255,0.06)');
+            g.addColorStop(1,   'rgba(10,6,30,0)');
+            ctx.beginPath(); ctx.arc(x, y, haloR, 0, Math.PI * 2);
             ctx.fillStyle = g; ctx.fill();
           }
-          ctx.beginPath(); ctx.arc(x, y, Math.max(1, r * 0.30), 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(210,215,255,0.85)'; ctx.fill();
-          ctx.globalAlpha = 1;
+          const coreR = Math.max(0.9, r * 0.30);
+          ctx.beginPath(); ctx.arc(x, y, coreR, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(235,242,255,0.90)'; ctx.fill();
         });
       } else {
-        // LOD3: star dots + label; линии только когда созвездие >= 180px
-        // (при маленьком sz линии создают «червяка» из-за удлинённых форм)
+        // LOD3: per-star glow + label; линии только когда созвездие >= 180px
         _skyRealPos.forEach(rc => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x: cx, y: cy } = _skyW2S(rc.wx, rc.wy);
@@ -296,25 +302,35 @@
             ctx.save();
             ctx.globalAlpha = 0.22;
             ctx.lineCap     = 'round';
-            ctx.shadowBlur  = 3;
-            ctx.shadowColor = 'rgba(180,190,255,0.6)';
+            ctx.shadowBlur  = 4;
+            ctx.shadowColor = 'rgba(180,205,255,0.55)';
             ctx.beginPath();
             rc.lns.forEach(([a, b]) => {
               ctx.moveTo(mpx(rc.pts[a]), mpy(rc.pts[a]));
               ctx.lineTo(mpx(rc.pts[b]), mpy(rc.pts[b]));
             });
-            ctx.strokeStyle = 'rgba(195,205,255,0.85)';
+            ctx.strokeStyle = 'rgba(205,220,255,0.85)';
             ctx.lineWidth   = Math.max(0.5, 0.9 * _skyScale);
             ctx.stroke();
             ctx.restore();
           }
 
-          // Точки-звёзды
-          ctx.globalAlpha = 0.35;
+          // Точки-звёзды с радиальным свечением (cool white)
+          ctx.globalAlpha = 0.60;
           rc.pts.forEach((pt, i) => {
+            const px = mpx(pt), py = mpy(pt);
             const dr = Math.max(1.4, sz * 0.022 * (1 + Math.min(deg[i], 3) * 0.15));
-            ctx.beginPath(); ctx.arc(mpx(pt), mpy(pt), dr, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(220,225,255,0.9)'; ctx.fill();
+            if (sk.skyGlow) {
+              const glowR = dr * 3.0;
+              const g = ctx.createRadialGradient(px, py, 0, px, py, glowR);
+              g.addColorStop(0,   'rgba(228,240,255,0.52)');
+              g.addColorStop(0.5, 'rgba(210,225,255,0.10)');
+              g.addColorStop(1,   'rgba(200,215,255,0)');
+              ctx.beginPath(); ctx.arc(px, py, glowR, 0, Math.PI * 2);
+              ctx.fillStyle = g; ctx.fill();
+            }
+            ctx.beginPath(); ctx.arc(px, py, dr, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(238,245,255,0.92)'; ctx.fill();
           });
           ctx.globalAlpha = 1;
 
@@ -322,11 +338,11 @@
           if (sz >= 120) {
             const fs = Math.max(8, Math.min(12, 8.5 * _skyScale));
             ctx.save();
-            ctx.globalAlpha  = 0.32;
+            ctx.globalAlpha  = 0.35;
             ctx.textAlign    = 'center';
             ctx.textBaseline = 'top';
             ctx.font         = `300 ${fs}px -apple-system, "SF Pro Text", sans-serif`;
-            ctx.fillStyle    = sk.skyGlow ? 'rgba(200,210,255,1)' : 'rgba(70,70,140,1)';
+            ctx.fillStyle    = sk.skyGlow ? 'rgba(210,224,255,1)' : 'rgba(70,70,140,1)';
             ctx.fillText(rc.n.toUpperCase(), cx, cy + sz * 0.5 + fs * 0.8);
             ctx.restore();
           }
