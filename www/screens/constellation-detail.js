@@ -30,7 +30,7 @@
       var sw = document.createElement('button');
       sw.className = 'color-swatch';
       sw.dataset.colorId = col.id;
-      sw.style.background = col.dot;
+      sw.style.backgroundColor = col.dot;
       sw.title = col.label;
       sw.addEventListener('click', function () {
         _detailColor = col.id;

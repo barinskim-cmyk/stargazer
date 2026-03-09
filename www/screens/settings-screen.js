@@ -98,7 +98,7 @@
     STAR_COLORS.forEach(function (col) {
       var btn = document.createElement('button');
       btn.className = 'color-swatch';
-      btn.style.background = col.dot;
+      btn.style.backgroundColor = col.dot;
       btn.title = col.label;
       btn.dataset.colorId = col.id;
       btn.addEventListener('click', function () {
