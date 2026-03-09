@@ -20,6 +20,39 @@
   var _detailTwinkle = null;   // {idx, startMs, duration, waitUntil}
   var _detailItem    = null;
   var _detailIdx     = -1;
+  var _detailColor   = 'gold'; // currently selected star color id
+
+  // ── Color picker ───────────────────────────────────────────────────────────
+  (function _buildColorPicker() {
+    var picker = document.getElementById('const-color-picker');
+    if (!picker || !window.STAR_COLORS) return;
+    STAR_COLORS.forEach(function (col) {
+      var sw = document.createElement('button');
+      sw.className = 'color-swatch';
+      sw.dataset.colorId = col.id;
+      sw.style.background = col.dot;
+      sw.title = col.label;
+      sw.addEventListener('click', function () {
+        _detailColor = col.id;
+        _refreshSwatches();
+        // persist color choice immediately so preview re-renders
+        var arr = _loadSaved();
+        if (_detailIdx >= 0 && arr[_detailIdx]) {
+          arr[_detailIdx].color = col.id;
+          if (_detailItem) _detailItem.color = col.id;
+          _persistSaved(arr);
+        }
+      });
+      picker.appendChild(sw);
+    });
+  })();
+
+  function _refreshSwatches() {
+    var swatches = document.querySelectorAll('.color-swatch');
+    swatches.forEach(function (sw) {
+      sw.classList.toggle('active', sw.dataset.colorId === _detailColor);
+    });
+  }
 
   // ── Twinkle helper ─────────────────────────────────────────────────────────
   function _detailPickTwinkle() {
@@ -112,9 +145,10 @@
       ctx.restore();
     });
 
-    // Stars
+    // Stars — use chosen color palette
     var _prevR = RADIUS;
     RADIUS = Math.round(Math.min(CW, CH) * 0.022);
+    var col = window.starColorById ? starColorById(_detailColor) : null;
     pts.forEach(function (p, i) {
       if (deg[i] === 0) return;
       var boost = 0;
@@ -123,8 +157,14 @@
         var env = t2 < 0.3 ? t2 / 0.3 : (1 - t2) / 0.7;
         boost = Math.sin(env * Math.PI * 0.5);
       }
-      drawStarPointTo(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false, 0.7 + boost * 0.9);
+      if (col && col.id !== 'gold' && window.drawStarPointToCol) {
+        drawStarPointToCol(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false,
+                           0.7 + boost * 0.9, col.glowColor, col.coreColor);
+      } else {
+        drawStarPointTo(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false, 0.7 + boost * 0.9);
+      }
     });
+    ctx.filter = 'none';
     RADIUS = _prevR;
   }
 
@@ -143,6 +183,8 @@
   // ── Open / Close ───────────────────────────────────────────────────────────
   function openConstDetail(item, idx) {
     _detailItem = item; _detailIdx = idx;
+    // Restore saved color choice
+    _detailColor = (item.color && window.starColorById) ? item.color : 'gold';
     var wrap = document.getElementById('const-detail-canvas-wrap');
     var cv   = document.getElementById('const-detail-canvas');
     requestAnimationFrame(function () {
@@ -162,6 +204,16 @@
       pb.textContent = t('const_published'); pb.classList.add('published'); pb.disabled = true;
     } else {
       pb.textContent = t('const_detail_sky'); pb.classList.remove('published'); pb.disabled = false;
+    }
+    // Color picker — visible only before publishing
+    var picker = document.getElementById('const-color-picker');
+    if (picker) {
+      if (item.publishedAt) {
+        picker.classList.add('hidden');
+      } else {
+        picker.classList.remove('hidden');
+        _refreshSwatches();
+      }
     }
     // Reset delete confirm state
     document.getElementById('const-detail-confirm-bar').style.display = 'none';
@@ -423,8 +475,12 @@
     var arr = _loadSaved();
     arr[_detailIdx].publishedAt = new Date().toISOString();
     arr[_detailIdx].skyAddr = _constellationAddress(_detailItem.name);
+    arr[_detailIdx].color = _detailColor; // persist chosen star color
     _persistSaved(arr);
     _detailItem = arr[_detailIdx];
+    // Hide color picker once published
+    var picker = document.getElementById('const-color-picker');
+    if (picker) picker.classList.add('hidden');
     playSound('twinkle');
     haptic('medium');
     sb.from('constellations').insert({

@@ -384,12 +384,17 @@
           ? 0.55 + 0.45 * Math.abs(Math.sin(_hlElapsed / 370 * Math.PI)) : 1;
 
         if (sk.skyGlow) {
-          // Stargazer: glowing halos
+          // Stargazer: glowing halos — use custom color if set
+          const _pCol = window.starColorById && p.c && p.c.color ? starColorById(p.c.color) : null;
           const haloR = r * (isHL ? 5 : 2.2);
           const g = ctx.createRadialGradient(x, y, 0, x, y, haloR);
           if (isHL) {
             g.addColorStop(0,   `rgba(255,252,242,${blinkMult.toFixed(3)})`);
             g.addColorStop(0.35,`rgba(230,218,200,${(0.38*blinkMult).toFixed(3)})`);
+            g.addColorStop(1,   'rgba(10,6,30,0)');
+          } else if (_pCol && _pCol.id !== 'gold') {
+            g.addColorStop(0,   `rgba(${_pCol.glowColor},${isMine ? 0.42 : 0.28})`);
+            g.addColorStop(0.4, `rgba(${_pCol.glowColor},${isMine ? 0.10 : 0.06})`);
             g.addColorStop(1,   'rgba(10,6,30,0)');
           } else if (isMine) {
             g.addColorStop(0,   'rgba(255,245,220,0.42)');
@@ -406,7 +411,9 @@
           ctx.beginPath(); ctx.arc(x, y, coreR, 0, Math.PI * 2);
           ctx.fillStyle = isHL
             ? `rgba(255,252,245,${(0.72 + 0.28*blinkMult).toFixed(3)})`
-            : isMine ? 'rgba(255,248,230,0.88)' : 'rgba(240,240,255,0.78)';
+            : (_pCol && _pCol.id !== 'gold')
+              ? `rgba(${_pCol.coreColor},${isMine ? 0.90 : 0.78})`
+              : isMine ? 'rgba(255,248,230,0.88)' : 'rgba(240,240,255,0.78)';
           ctx.fill();
         } else {
           // Светлые темы: чёткие точки
@@ -448,6 +455,7 @@
 
         // Only dots — no connecting lines in sky view
         if (sk.skyGlow) {
+          const _pCol3 = window.starColorById && p.c && p.c.color ? starColorById(p.c.color) : null;
           const _prevR = RADIUS;
           RADIUS = Math.max(1, Math.round(sz * 0.013));
           const hlBlink = isHL && _hlElapsed >= 0
@@ -455,7 +463,12 @@
           const boost = isHL ? 0.4 + hlBlink : isMine ? 0.3 : 0.1;
           pts.forEach((pt, i) => {
             if (deg[i] === 0) return;
-            drawStarPointTo(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2), false, false, false, boost);
+            if (_pCol3 && _pCol3.id !== 'gold') {
+              drawStarPointToCol(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2),
+                                 false, false, false, boost, _pCol3.glowColor, _pCol3.coreColor);
+            } else {
+              drawStarPointTo(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2), false, false, false, boost);
+            }
           });
           ctx.filter = 'none'; RADIUS = _prevR;
         } else {
