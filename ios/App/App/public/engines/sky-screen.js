@@ -111,26 +111,37 @@
     else { _skyOffY = Math.min(0, Math.max(H - wH, _skyOffY)); }
   }
 
-  /** Возвращает звёзды ячейки (cx, cy) из LRU-кэша. */
+  /** Возвращает звёзды ячейки (cx, cy) из LRU-кэша.
+   *  density=6 + MIN_DIST=120: звёзды не кластеризуются → нет «червяков». */
   function _skyGetCellStars(cx, cy) {
     const key = cx + ',' + cy;
     if (_skyBgCache.has(key)) {
       const s = _skyBgCache.get(key);
-      _skyBgCache.delete(key); _skyBgCache.set(key, s); // LRU: поднимаем вверх
+      _skyBgCache.delete(key); _skyBgCache.set(key, s);
       return s;
     }
-    // Генерируем детерминированно через _skyHash
+    const MAX_STARS = 6;    // мало звёзд — случайные кластеры редки
+    const MIN_DIST  = 120;  // мин. расстояние между звёздами в ячейке (world units)
     const stars = [];
-    const density = 28; // звёзд на ячейку
-    for (let i = 0; i < density; i++) {
+    const placed = [];
+    const candidates = MAX_STARS * 5; // пробуем больше кандидатов чем нужно
+    for (let i = 0; i < candidates && stars.length < MAX_STARS; i++) {
       const sx = (cx + _skyHash(cx + '_' + cy + '_x' + i)) * _SKY_CELL;
       const sy = (cy + _skyHash(cx + '_' + cy + '_y' + i)) * _SKY_CELL;
+      // Пропускаем если слишком близко к уже поставленной звезде
+      if (placed.some(p => Math.hypot(p[0] - sx, p[1] - sy) < MIN_DIST)) continue;
+      const tier = _skyHash(cx + '_' + cy + '_t' + i);
+      const r = tier < 0.78 ? 0.4 + _skyHash(cx + '_' + cy + '_r' + i) * 0.7
+              : tier < 0.95 ? 1.1 + _skyHash(cx + '_' + cy + '_r' + i) * 1.0
+              :               2.0 + _skyHash(cx + '_' + cy + '_r' + i) * 1.0;
+      const a = tier < 0.78 ? 0.06 + _skyHash(cx + '_' + cy + '_a' + i) * 0.20
+              : tier < 0.95 ? 0.14 + _skyHash(cx + '_' + cy + '_a' + i) * 0.30
+              :               0.28 + _skyHash(cx + '_' + cy + '_a' + i) * 0.28;
       stars.push({
-        x: sx, y: sy,
-        r: 0.3 + _skyHash(cx + '_' + cy + '_r' + i) * 1.2,
-        a: 0.06 + _skyHash(cx + '_' + cy + '_a' + i) * 0.26,
+        x: sx, y: sy, r, a,
         col: _BG_COLORS[Math.floor(_skyHash(cx + '_' + cy + '_c' + i) * _BG_COLORS.length)],
       });
+      placed.push([sx, sy]);
     }
     if (_skyBgCache.size >= 200) _skyBgCache.delete(_skyBgCache.keys().next().value);
     _skyBgCache.set(key, stars);
@@ -454,7 +465,24 @@
     }
   }
 
-  function _skyLoop() { if (!_skyOpen) { _skyRaf = null; return; } _skyDraw(); _skyRaf = requestAnimationFrame(_skyLoop); }
+  // ── DEBUG: scale overlay (временно для диагностики артефактов) ──────────
+  function _skyDrawDebug() {
+    if (!_skyCX) return;
+    const ctx = _skyCX;
+    const W = _skyCV.width;
+    const label = 'scale: ' + _skyScale.toFixed(4);
+    ctx.save();
+    ctx.font = 'bold 13px monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(W - 150, 8, 142, 22);
+    ctx.fillStyle = 'rgba(255,220,80,1)';
+    ctx.fillText(label, W - 10, 12);
+    ctx.restore();
+  }
+
+  function _skyLoop() { if (!_skyOpen) { _skyRaf = null; return; } _skyDraw(); _skyDrawDebug(); _skyRaf = requestAnimationFrame(_skyLoop); }
 
   /**
    * Debounced viewport query — подгружает созвездия в текущем viewport.
