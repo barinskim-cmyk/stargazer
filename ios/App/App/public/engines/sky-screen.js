@@ -174,25 +174,10 @@
   }
 
   function _skyBuildPos(data) {
-    const placed = [];
-    const MIN_DIST = 1200; // scaled with world (was 120 at world=3000)
-    _skyPos = data.map(item => {
-      const p = _skyItemToPos(item, false);
-      // Collision avoidance только для созвездий без серверных координат
-      if (!p.hasCoord) {
-        let tries = 0;
-        while (tries < 30) {
-          const clash = placed.find(q => Math.hypot(p.wx - q.wx, p.wy - q.wy) < MIN_DIST);
-          if (!clash) break;
-          const angle = _skyHash(item.id + '_nudge' + tries) * Math.PI * 2;
-          p.wx = Math.max(200, Math.min(_SKY_WORLD - 200, p.wx + Math.cos(angle) * MIN_DIST));
-          p.wy = Math.max(200, Math.min(_SKY_WORLD - 200, p.wy + Math.sin(angle) * MIN_DIST));
-          tries++;
-        }
-      }
-      placed.push(p);
-      return p;
-    });
+    // Collision avoidance убран: при мире 100k×100k и gx/gy от сервера
+    // созвездия уже распределены органично; принудительное смещение
+    // создаёт визуальную регулярность при малом числе объектов.
+    _skyPos = data.map(item => _skyItemToPos(item, false));
   }
 
   function _skyDraw() {
@@ -209,35 +194,35 @@
     const wL = (-_skyOffX) / _skyScale - pad,  wR = (W - _skyOffX) / _skyScale + pad;
     const wT = (-_skyOffY) / _skyScale - pad,  wB = (H - _skyOffY) / _skyScale + pad;
 
-    // ── Фоновые звёзды: cell-based процедурная генерация (масштабируется с любым _SKY_WORLD) ──
-    if (sk.skyBgStar) {
-      // Определяем диапазон видимых ячеек
+    // ── Фоновые звёзды: cell-based процедурная генерация ──────────────────
+    // Рисуем только когда ячейка >= 8px на экране — иначе звёзды sub-pixel
+    // и создают видимый регулярный паттерн сетки при max zoom-out.
+    if (sk.skyBgStar && _SKY_CELL * _skyScale >= 8) {
       const cxL = Math.floor(wL / _SKY_CELL);
       const cxR = Math.ceil(wR  / _SKY_CELL);
       const cyT = Math.floor(wT / _SKY_CELL);
       const cyB = Math.ceil(wB  / _SKY_CELL);
-      // Ограничиваем количество ячеек за кадр (max 32×32 = 1024 ячейки)
-      // При zoom-out пропускаем ячейки через stride чтобы держать FPS
-      const maxCells = 32;
-      const sx = Math.max(1, Math.ceil((cxR - cxL + 1) / maxCells));
-      const sy = Math.max(1, Math.ceil((cyB - cyT + 1) / maxCells));
-      ctx.save();
-      ctx.filter = 'blur(0.7px)';
-      for (let cx = cxL; cx <= cxR; cx += sx) {
-        for (let cy = cyT; cy <= cyB; cy += sy) {
-          const stars = _skyGetCellStars(cx, cy);
-          for (let i = 0; i < stars.length; i++) {
-            const s = stars[i];
-            if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) continue;
-            const { x, y } = _skyW2S(s.x, s.y);
-            const r = Math.max(0.5, Math.min(1.5, s.r * 0.55));
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
+      // При большом числе ячеек — ограничиваем 24×24 без stride (лучше качество)
+      const nCx = cxR - cxL + 1, nCy = cyB - cyT + 1;
+      if (nCx * nCy <= 576) { // 24×24
+        ctx.save();
+        ctx.filter = 'blur(0.7px)';
+        for (let cx = cxL; cx <= cxR; cx++) {
+          for (let cy = cyT; cy <= cyB; cy++) {
+            const stars = _skyGetCellStars(cx, cy);
+            for (let i = 0; i < stars.length; i++) {
+              const s = stars[i];
+              if (s.x < wL || s.x > wR || s.y < wT || s.y > wB) continue;
+              const { x, y } = _skyW2S(s.x, s.y);
+              const r = Math.max(0.5, Math.min(1.5, s.r * 0.55));
+              ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${s.col},${s.a})`; ctx.fill();
+            }
           }
         }
+        ctx.filter = 'none';
+        ctx.restore();
       }
-      ctx.filter = 'none';
-      ctx.restore();
     }
 
     // Highlight state
@@ -655,22 +640,12 @@
     const W       = _SKY_WORLD - 2 * margin;
     const MIN_DIST = 4000; // world-units min gap between constellation centers
 
-    const placed = []; // already accepted positions
+    // Чисто детерминированные позиции через хэш — без collision avoidance.
+    // Collision avoidance при большом мире создаёт видимую регулярную сетку.
+    // Хэш-функция уже даёт хорошую псевдослучайную дисперсию по всей площади.
     _skyRealPos = REAL_CONSTELLATIONS.map((rc, i) => {
-      let wx, wy, ok, attempt = 0;
-      do {
-        // Deterministic pseudo-random candidate via FNV hash
-        wx = margin + _skyHash('rcx' + i + '_a' + attempt) * W;
-        wy = margin + _skyHash('rcy' + i + '_a' + attempt) * W;
-        ok = placed.every(p => Math.hypot(p.wx - wx, p.wy - wy) >= MIN_DIST);
-        attempt++;
-      } while (!ok && attempt < 60);
-      // Fallback: if no clear spot found, use first candidate anyway
-      if (!ok) {
-        wx = margin + _skyHash('rcx' + i + '_a0') * W;
-        wy = margin + _skyHash('rcy' + i + '_a0') * W;
-      }
-      placed.push({ wx, wy });
+      const wx = margin + _skyHash('rcx' + i) * W;
+      const wy = margin + _skyHash('rcy' + i) * W;
       return { n: rc.n, pts: rc.pts, lns: rc.lns, wx, wy };
     });
   }
