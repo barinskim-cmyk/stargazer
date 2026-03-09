@@ -268,7 +268,8 @@
           ctx.globalAlpha = 1;
         });
       } else {
-        // LOD3: full stick figure — lines + star dots + label
+        // LOD3: star dots + label; линии только когда созвездие >= 180px
+        // (при маленьком sz линии создают «червяка» из-за удлинённых форм)
         _skyRealPos.forEach(rc => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x: cx, y: cy } = _skyW2S(rc.wx, rc.wy);
@@ -276,35 +277,38 @@
           const mpx = pt => cx + (pt.x - 0.5) * sz;
           const mpy = pt => cy + (pt.y - 0.5) * sz;
 
-          // Lines
-          ctx.save();
-          ctx.globalAlpha = 0.22;
-          ctx.lineCap     = 'round';
-          ctx.shadowBlur  = 3;
-          ctx.shadowColor = 'rgba(180,190,255,0.6)';
-          ctx.beginPath();
-          rc.lns.forEach(([a, b]) => {
-            ctx.moveTo(mpx(rc.pts[a]), mpy(rc.pts[a]));
-            ctx.lineTo(mpx(rc.pts[b]), mpy(rc.pts[b]));
-          });
-          ctx.strokeStyle = 'rgba(195,205,255,0.85)';
-          ctx.lineWidth   = Math.max(0.5, 0.9 * _skyScale);
-          ctx.stroke();
-          ctx.restore();
-
-          // Star dots
           const deg = new Array(rc.pts.length).fill(0);
           rc.lns.forEach(([a, b]) => { deg[a]++; deg[b]++; });
-          ctx.globalAlpha = 0.30;
+
+          // Линии — только когда созвездие достаточно крупное (>= 180px)
+          if (sz >= 180) {
+            ctx.save();
+            ctx.globalAlpha = 0.22;
+            ctx.lineCap     = 'round';
+            ctx.shadowBlur  = 3;
+            ctx.shadowColor = 'rgba(180,190,255,0.6)';
+            ctx.beginPath();
+            rc.lns.forEach(([a, b]) => {
+              ctx.moveTo(mpx(rc.pts[a]), mpy(rc.pts[a]));
+              ctx.lineTo(mpx(rc.pts[b]), mpy(rc.pts[b]));
+            });
+            ctx.strokeStyle = 'rgba(195,205,255,0.85)';
+            ctx.lineWidth   = Math.max(0.5, 0.9 * _skyScale);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Точки-звёзды
+          ctx.globalAlpha = 0.35;
           rc.pts.forEach((pt, i) => {
-            const dr = Math.max(1.2, sz * 0.020 * (1 + Math.min(deg[i], 3) * 0.15));
+            const dr = Math.max(1.4, sz * 0.022 * (1 + Math.min(deg[i], 3) * 0.15));
             ctx.beginPath(); ctx.arc(mpx(pt), mpy(pt), dr, 0, Math.PI * 2);
             ctx.fillStyle = 'rgba(220,225,255,0.9)'; ctx.fill();
           });
           ctx.globalAlpha = 1;
 
-          // Label — "Hi I'm a real, my name is NAME"
-          if (_skyScale > 0.55) {
+          // Название
+          if (sz >= 120) {
             const fs = Math.max(8, Math.min(12, 8.5 * _skyScale));
             ctx.save();
             ctx.globalAlpha  = 0.32;
