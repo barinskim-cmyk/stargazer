@@ -159,7 +159,7 @@
       }
       if (col && col.id !== 'gold' && window.drawStarPointToCol) {
         drawStarPointToCol(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false,
-                           0.7 + boost * 0.9, col.glowColor, col.coreColor);
+                           0.7 + boost * 0.9, col.glowColor);
       } else {
         drawStarPointTo(ctx, tx(p), ty(p), Math.max(deg[i], 2), false, false, false, 0.7 + boost * 0.9);
       }

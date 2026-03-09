@@ -53,27 +53,32 @@
                        deg === 6 ? 0.84 :
                        deg === 7 ? 0.93 : 1.00;
 
-    const glowColor = glowColorOverride || (isBlocking ? '255,70,70' : '255,200,120');
+    // haloColor  — outer glow (Layer 1): custom tint when override provided
+    // spikeColor — spike rays (Layer 2): always gold (same as default)
+    // coreColor  — bright core (Layer 3): always gold (same as default)
+    const baseColor  = isBlocking ? '255,70,70'  : '255,200,120';
+    const haloColor  = glowColorOverride || baseColor;
+    const spikeColor = baseColor; // spikes stay gold regardless of tint
     const haloR = boostedGlowR * 1.8 * (0.3 + spikeScale * 0.7);
     const a = boostedAlpha;
 
     if (glowFull) {
-      // ── Layer 1: circular halo ──────────────────────────────────────
+      // ── Layer 1: circular halo (tinted with custom color) ───────────
       c.save();
       c.shadowBlur  = Math.max(8, haloR * 0.22);
-      c.shadowColor = 'rgba(' + glowColor + ',' + (a * 0.28).toFixed(3) + ')';
+      c.shadowColor = 'rgba(' + haloColor + ',' + (a * 0.28).toFixed(3) + ')';
       const circleGrad = c.createRadialGradient(px, py, 0, px, py, haloR);
-      circleGrad.addColorStop(0,    'rgba(' + glowColor + ',' + Math.min(a * 0.55, 0.92).toFixed(3) + ')');
-      circleGrad.addColorStop(0.12, 'rgba(' + glowColor + ',' + (a * 0.42).toFixed(3) + ')');
-      circleGrad.addColorStop(0.28, 'rgba(' + glowColor + ',' + (a * 0.22).toFixed(3) + ')');
-      circleGrad.addColorStop(0.50, 'rgba(' + glowColor + ',' + (a * 0.09).toFixed(3) + ')');
-      circleGrad.addColorStop(0.75, 'rgba(' + glowColor + ',' + (a * 0.03).toFixed(3) + ')');
-      circleGrad.addColorStop(1,    'rgba(' + glowColor + ',0)');
+      circleGrad.addColorStop(0,    'rgba(' + haloColor + ',' + Math.min(a * 0.55, 0.92).toFixed(3) + ')');
+      circleGrad.addColorStop(0.12, 'rgba(' + haloColor + ',' + (a * 0.42).toFixed(3) + ')');
+      circleGrad.addColorStop(0.28, 'rgba(' + haloColor + ',' + (a * 0.22).toFixed(3) + ')');
+      circleGrad.addColorStop(0.50, 'rgba(' + haloColor + ',' + (a * 0.09).toFixed(3) + ')');
+      circleGrad.addColorStop(0.75, 'rgba(' + haloColor + ',' + (a * 0.03).toFixed(3) + ')');
+      circleGrad.addColorStop(1,    'rgba(' + haloColor + ',0)');
       c.beginPath(); c.arc(px, py, haloR, 0, Math.PI * 2);
       c.fillStyle = circleGrad; c.fill();
       c.restore();
 
-      // ── Layer 2: spike rays ─────────────────────────────────────────
+      // ── Layer 2: spike rays (always gold) ───────────────────────────
       if (degree > 0) {
         const spikeLen = boostedGlowR * 0.93 * spikeScale;
         const spikePasses = [
@@ -84,7 +89,7 @@
         spikePasses.forEach(function (pass) {
           c.save();
           c.shadowBlur  = pass.sblur;
-          c.shadowColor = 'rgba(' + glowColor + ',' + Math.min(pass.alpha * 1.2, 0.95).toFixed(3) + ')';
+          c.shadowColor = 'rgba(' + spikeColor + ',' + Math.min(pass.alpha * 1.2, 0.95).toFixed(3) + ')';
           [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2].forEach(function (angle) {
             var ex = Math.cos(angle), ey = Math.sin(angle);
             var nx = -ey, ny = ex;
@@ -94,11 +99,11 @@
             c.lineTo(px - nx * pass.base, py - ny * pass.base);
             c.closePath();
             var sg = c.createLinearGradient(px, py, px + ex * spikeLen, py + ey * spikeLen);
-            sg.addColorStop(0,    'rgba(' + glowColor + ',' + (pass.alpha * 0.30).toFixed(3) + ')');
-            sg.addColorStop(0.18, 'rgba(' + glowColor + ',' + (pass.alpha * 0.85).toFixed(3) + ')');
-            sg.addColorStop(0.45, 'rgba(' + glowColor + ',' + (pass.alpha * 0.28).toFixed(3) + ')');
-            sg.addColorStop(0.75, 'rgba(' + glowColor + ',' + (pass.alpha * 0.06).toFixed(3) + ')');
-            sg.addColorStop(1,    'rgba(' + glowColor + ',0)');
+            sg.addColorStop(0,    'rgba(' + spikeColor + ',' + (pass.alpha * 0.30).toFixed(3) + ')');
+            sg.addColorStop(0.18, 'rgba(' + spikeColor + ',' + (pass.alpha * 0.85).toFixed(3) + ')');
+            sg.addColorStop(0.45, 'rgba(' + spikeColor + ',' + (pass.alpha * 0.28).toFixed(3) + ')');
+            sg.addColorStop(0.75, 'rgba(' + spikeColor + ',' + (pass.alpha * 0.06).toFixed(3) + ')');
+            sg.addColorStop(1,    'rgba(' + spikeColor + ',0)');
             c.fillStyle = sg; c.fill();
           });
           c.restore();
@@ -106,11 +111,11 @@
       }
     }
 
-    // ── Layer 3: bright core ────────────────────────────────────────────
+    // ── Layer 3: bright core (always gold) ──────────────────────────────
     c.save();
-    var coreColor = coreColorOverride || (isBlocking ? '255,110,110' : '255,245,210');
+    var coreColor = isBlocking ? '255,110,110' : '255,245,210';
     c.shadowBlur  = Math.max(6, boostedCoreR * 0.7);
-    c.shadowColor = 'rgba(' + (coreColorOverride ? coreColorOverride : (isBlocking ? '255,110,110' : '255,230,170')) + ',0.70)';
+    c.shadowColor = 'rgba(' + (isBlocking ? '255,110,110' : '255,230,170') + ',0.70)';
     var coreGrad = c.createRadialGradient(px, py, 0, px, py, boostedCoreR);
     coreGrad.addColorStop(0,    'rgba(' + coreColor + ',0.95)');
     coreGrad.addColorStop(0.25, 'rgba(' + coreColor + ',0.80)');
@@ -137,10 +142,11 @@
     _drawStarImpl(c, px, py, degree, isHov, isSel, isBlocking, boost, true);
   }
 
-  // Like drawStarPointTo but with custom glow/core colors (e.g. for IAU real constellations)
-  function drawStarPointToCol(c, px, py, degree, isHov, isSel, isBlocking, boost, glowColor, coreColor) {
+  // Like drawStarPointTo but with a custom outer halo color tint.
+  // Spikes (Layer 2) and core (Layer 3) always stay gold — only the halo changes.
+  function drawStarPointToCol(c, px, py, degree, isHov, isSel, isBlocking, boost, glowColor) {
     if (boost === undefined) boost = 0;
-    _drawStarImpl(c, px, py, degree, isHov, isSel, isBlocking, boost, true, glowColor, coreColor);
+    _drawStarImpl(c, px, py, degree, isHov, isSel, isBlocking, boost, true, glowColor);
   }
 
   // ── Twinkle: victory screen ───────────────────────────────────────────

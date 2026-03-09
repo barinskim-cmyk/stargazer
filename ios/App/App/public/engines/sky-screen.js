@@ -249,9 +249,8 @@
     // ── Real IAU constellations — permanent background layer ──────────────
     if (_skyRealPos) {
       const CREAL = 160; // display size in screen-px at scale 1
-      // Slightly warm-white palette for IAU real constellations
-      const IAU_GLOW = '205,218,255'; // soft blue-white glow (warmer)
-      const IAU_CORE = '242,244,255'; // near-white core with slight warmth
+      // Outer halo tint for IAU real constellations (spikes + core stay gold)
+      const IAU_GLOW = '205,218,255'; // soft blue-white halo
 
       if (_skyScale < _SKY_THRESH_DOT) {
         // LOD1: glowing dot with subtle twinkle
@@ -335,7 +334,7 @@
             // Лёгкий twinkle boost, у каждой звезды свой фазовый сдвиг
             const tBoost = 0.04 * (0.5 + 0.5 * Math.sin(_now / 2500 + ri * 1.618 + i * 0.97));
             drawStarPointToCol(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 1),
-                               false, false, false, tBoost, IAU_GLOW, IAU_CORE);
+                               false, false, false, tBoost, IAU_GLOW);
           });
           ctx.filter = 'none';
           RADIUS = _prevR;
@@ -465,7 +464,7 @@
             if (deg[i] === 0) return;
             if (_pCol3 && _pCol3.id !== 'gold') {
               drawStarPointToCol(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2),
-                                 false, false, false, boost, _pCol3.glowColor, _pCol3.coreColor);
+                                 false, false, false, boost, _pCol3.glowColor);
             } else {
               drawStarPointTo(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 2), false, false, false, boost);
             }
