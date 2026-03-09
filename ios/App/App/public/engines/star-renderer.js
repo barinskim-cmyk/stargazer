@@ -149,6 +149,14 @@
     _drawStarImpl(c, px, py, degree, isHov, isSel, isBlocking, boost, true, glowColor);
   }
 
+  // Like drawStarPoint (respects starGlow setting) but with a custom outer halo tint.
+  // Used during gameplay when _appSettings.starColor is set.
+  function drawStarPointCol(ctx, px, py, degree, isHov, isSel, isBlocking, boost, glowColor) {
+    if (boost === undefined) boost = 0;
+    var glowFull = window._appSettings.starGlow !== 'active' || isHov || isSel;
+    _drawStarImpl(ctx, px, py, degree, isHov, isSel, isBlocking, boost, glowFull, glowColor);
+  }
+
   // ── Twinkle: victory screen ───────────────────────────────────────────
 
   function startTwinkleLoop() {
@@ -421,6 +429,7 @@
   window.drawStarPoint          = drawStarPoint;
   window.drawStarPointTo        = drawStarPointTo;
   window.drawStarPointToCol     = drawStarPointToCol;
+  window.drawStarPointCol       = drawStarPointCol;
   window.startTwinkleLoop       = startTwinkleLoop;
   window.startGameTwinkleLoop   = startGameTwinkleLoop;
   window.drawRankEmblem         = drawRankEmblem;
