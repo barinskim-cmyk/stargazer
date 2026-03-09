@@ -249,9 +249,9 @@
     // ── Real IAU constellations — permanent background layer ──────────────
     if (_skyRealPos) {
       const CREAL = 160; // display size in screen-px at scale 1
-      // Cool blue-white palette for IAU real constellations
-      const IAU_GLOW = '180,210,255'; // cool blue-white glow
-      const IAU_CORE = '228,242,255'; // near-white core
+      // Slightly warm-white palette for IAU real constellations
+      const IAU_GLOW = '205,218,255'; // soft blue-white glow (warmer)
+      const IAU_CORE = '242,244,255'; // near-white core with slight warmth
 
       if (_skyScale < _SKY_THRESH_DOT) {
         // LOD1: glowing dot with subtle twinkle
