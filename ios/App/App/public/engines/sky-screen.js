@@ -249,45 +249,56 @@
     // ── Real IAU constellations — permanent background layer ──────────────
     if (_skyRealPos) {
       const CREAL = 160; // display size in screen-px at scale 1
+      // Cool blue-white palette for IAU real constellations
+      const IAU_GLOW = '180,210,255'; // cool blue-white glow
+      const IAU_CORE = '228,242,255'; // near-white core
+
       if (_skyScale < _SKY_THRESH_DOT) {
-        // LOD1: glowing dot — cool white, mirrors user LOD1 brightness
-        _skyRealPos.forEach(rc => {
+        // LOD1: glowing dot with subtle twinkle
+        _skyRealPos.forEach((rc, ri) => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x, y } = _skyW2S(rc.wx, rc.wy);
+          // Per-star twinkle offset so they don't all pulse together
+          const twinkle = 0.5 + 0.5 * Math.sin(_now / 2800 + ri * 1.618);
           if (sk.skyGlow) {
-            const g = ctx.createRadialGradient(x, y, 0, x, y, 5);
-            g.addColorStop(0, 'rgba(215,228,255,0.20)');
-            g.addColorStop(1, 'rgba(200,218,255,0)');
-            ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2);
+            const glowA = 0.12 + 0.10 * twinkle;
+            const g = ctx.createRadialGradient(x, y, 0, x, y, 5.5);
+            g.addColorStop(0, `rgba(${IAU_GLOW},${glowA.toFixed(3)})`);
+            g.addColorStop(1, `rgba(${IAU_GLOW},0)`);
+            ctx.beginPath(); ctx.arc(x, y, 5.5, 0, Math.PI * 2);
             ctx.fillStyle = g; ctx.fill();
           }
-          ctx.globalAlpha = 0.30;
+          ctx.globalAlpha = 0.22 + 0.14 * twinkle;
           ctx.beginPath(); ctx.arc(x, y, 1.8, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(228,238,255,1)'; ctx.fill();
+          ctx.fillStyle = `rgba(${IAU_CORE},1)`; ctx.fill();
           ctx.globalAlpha = 1;
         });
       } else if (_skyScale < _SKY_THRESH) {
-        // LOD2: halo glow — cool white, mirrors user LOD2 structure
-        _skyRealPos.forEach(rc => {
+        // LOD2: halo glow with subtle twinkle — mirrors user LOD2 structure
+        _skyRealPos.forEach((rc, ri) => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x, y } = _skyW2S(rc.wx, rc.wy);
           const r = 1.2 + 5 * (_skyScale / _SKY_THRESH);
+          const twinkle = 0.5 + 0.5 * Math.sin(_now / 3200 + ri * 1.618);
           if (sk.skyGlow) {
-            const haloR = r * 2.8;
+            const haloR  = r * 2.8;
+            const haloA0 = (0.20 + 0.14 * twinkle).toFixed(3);
+            const haloA1 = (0.04 + 0.04 * twinkle).toFixed(3);
             const g = ctx.createRadialGradient(x, y, 0, x, y, haloR);
-            g.addColorStop(0,   'rgba(215,228,255,0.30)');
-            g.addColorStop(0.4, 'rgba(200,215,255,0.06)');
+            g.addColorStop(0,   `rgba(${IAU_GLOW},${haloA0})`);
+            g.addColorStop(0.4, `rgba(${IAU_GLOW},${haloA1})`);
             g.addColorStop(1,   'rgba(10,6,30,0)');
             ctx.beginPath(); ctx.arc(x, y, haloR, 0, Math.PI * 2);
             ctx.fillStyle = g; ctx.fill();
           }
+          const coreA = (0.78 + 0.18 * twinkle).toFixed(3);
           const coreR = Math.max(0.9, r * 0.30);
           ctx.beginPath(); ctx.arc(x, y, coreR, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(235,242,255,0.90)'; ctx.fill();
+          ctx.fillStyle = `rgba(${IAU_CORE},${coreA})`; ctx.fill();
         });
       } else {
-        // LOD3: per-star glow + label; линии только когда созвездие >= 180px
-        _skyRealPos.forEach(rc => {
+        // LOD3: drawStarPointToCol — same multi-layer glow as user constellations, cool white
+        _skyRealPos.forEach((rc, ri) => {
           if (rc.wx < wL || rc.wx > wR || rc.wy < wT || rc.wy > wB) return;
           const { x: cx, y: cy } = _skyW2S(rc.wx, rc.wy);
           const sz  = CREAL * _skyScale;
@@ -315,23 +326,19 @@
             ctx.restore();
           }
 
-          // Точки-звёзды с радиальным свечением (cool white)
-          ctx.globalAlpha = 0.60;
+          // Звёзды через drawStarPointToCol — полное свечение + лучи, холодные цвета
+          ctx.globalAlpha = 0.55;
+          const _prevR = RADIUS;
+          RADIUS = Math.max(1, Math.round(sz * 0.013));
           rc.pts.forEach((pt, i) => {
-            const px = mpx(pt), py = mpy(pt);
-            const dr = Math.max(1.4, sz * 0.022 * (1 + Math.min(deg[i], 3) * 0.15));
-            if (sk.skyGlow) {
-              const glowR = dr * 3.0;
-              const g = ctx.createRadialGradient(px, py, 0, px, py, glowR);
-              g.addColorStop(0,   'rgba(228,240,255,0.52)');
-              g.addColorStop(0.5, 'rgba(210,225,255,0.10)');
-              g.addColorStop(1,   'rgba(200,215,255,0)');
-              ctx.beginPath(); ctx.arc(px, py, glowR, 0, Math.PI * 2);
-              ctx.fillStyle = g; ctx.fill();
-            }
-            ctx.beginPath(); ctx.arc(px, py, dr, 0, Math.PI * 2);
-            ctx.fillStyle = 'rgba(238,245,255,0.92)'; ctx.fill();
+            if (deg[i] === 0) return;
+            // Лёгкий twinkle boost, у каждой звезды свой фазовый сдвиг
+            const tBoost = 0.04 * (0.5 + 0.5 * Math.sin(_now / 2500 + ri * 1.618 + i * 0.97));
+            drawStarPointToCol(ctx, mpx(pt), mpy(pt), Math.max(deg[i], 1),
+                               false, false, false, tBoost, IAU_GLOW, IAU_CORE);
           });
+          ctx.filter = 'none';
+          RADIUS = _prevR;
           ctx.globalAlpha = 1;
 
           // Название
